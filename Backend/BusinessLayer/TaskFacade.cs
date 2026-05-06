@@ -10,6 +10,9 @@ namespace Backend.Facades
     /// </summary>
     public class TaskFacade
     {
+        private UserFacade _userFacade; 
+
+
         /// <summary>
         /// Adds a new task to the backlog of the specified board.
         /// </summary>
@@ -94,6 +97,6 @@ namespace Backend.Facades
         /// Postcondition: Returns a list of tasks currently in progress.
         /// </remarks>
         /// <exception cref="Exception">Thrown if user not logged in.</exception>
-        public List<Task> GetInProgressTasks(string email) => throw new NotImplementedException();
+        public List<Task> InProgressTasks(string email) => throw new NotImplementedException();
     }
 }

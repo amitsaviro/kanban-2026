@@ -1,10 +1,12 @@
 using System;
 using Backend.BusinessLayer;
+using System.Collections.Generic;
 
 namespace Backend.Facades
 {
     public class UserFacade
     {
+        private Dictionary<string, User> users;
 
         /// <summary>
         /// Registers a new user to the system.

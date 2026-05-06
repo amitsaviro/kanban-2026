@@ -46,7 +46,6 @@ namespace Backend.ServiceLayer
             throw new NotImplementedException();
         }
 
-        ///////////////////////// yuval- new functions/////////////////
         /// <summary>
         /// This method gets the limit of a specific column.
         /// </summary>
@@ -72,7 +71,7 @@ namespace Backend.ServiceLayer
         }
 
         /// <summary>
-        /// This method returns a column given its name.
+        /// This method returns a column given its ordinal.
         /// </summary>
         /// <param name="email">The email address of the user, must be logged in</param>
         /// <param name="boardName">The name of the board</param>
@@ -82,8 +81,6 @@ namespace Backend.ServiceLayer
         {
             throw new NotImplementedException();
         }
-///////////////////////////////////////////////////////////////////////////////////
-
     
     }
 }

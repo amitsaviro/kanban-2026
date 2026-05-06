@@ -1,5 +1,6 @@
 using System;
 using Backend.BusinessLayer;
+using System.Collections.Generic;
 
 namespace Backend.Facades
 {
@@ -9,6 +10,9 @@ namespace Backend.Facades
     /// </summary>
     public class BoardFacade
     {
+        private Dictionary<string, User> users;
+
+
         /// <summary>
         /// Creates a new board for the specified user.
         /// </summary>
@@ -33,6 +37,8 @@ namespace Backend.Facades
         /// <exception cref="ArgumentException">Thrown if board does not exist or user is not the owner.</exception>
         public void DeleteBoard(string email, string boardName) => throw new NotImplementedException();
 
+
+
         /// <summary>
         /// Sets a new task limit for a specific column in a board.
         /// </summary>
@@ -46,5 +52,42 @@ namespace Backend.Facades
         /// </remarks>
         /// <exception cref="ArgumentException">Thrown if limit is invalid or column does not exist.</exception>
         public void LimitColumn(string email, string boardName, int columnOrdinal, int limit) => throw new NotImplementedException();
+
+
+        /// <summary>
+        /// This method gets the limit of a specific column.
+        /// </summary>
+        /// <param name="email">The email address of the user, must be logged in</param>
+        /// <param name="boardName">The name of the board</param>
+        /// <param name="columnOrdinal">The column ID. The first column is identified by 0.</param>
+        /// <returns>A JSON string with the column's limit, unless an error occurs.</returns>
+        public int GetColumnLimit(string email, string boardName, int columnOrdinal)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// This method gets the name of a specific column.
+        /// </summary>
+        /// <param name="email">The email address of the user, must be logged in</param>
+        /// <param name="boardName">The name of the board</param>
+        /// <param name="columnOrdinal">The column ID. The first column is identified by 0.</param>
+        /// <returns>A JSON string with the column's name, unless an error occurs.</returns>
+        public string GetColumnName(string email, string boardName, int columnOrdinal)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// This method returns a column given its name.
+        /// </summary>
+        /// <param name="email">The email address of the user, must be logged in</param>
+        /// <param name="boardName">The name of the board</param>
+        /// <param name="columnOrdinal">The column ID. The first column is identified by 0.</param>
+        /// <returns>A JSON string with a list of the column's tasks, unless an error occurs.</returns>
+        public List<Task> GetColumn(string email, string boardName, int columnOrdinal)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
