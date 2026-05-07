@@ -1,6 +1,5 @@
 using System;
 using Backend.BusinessLayer;
-using System.Collections.Generic;
 
 namespace Backend.Facades
 {

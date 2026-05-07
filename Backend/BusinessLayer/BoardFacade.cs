@@ -10,7 +10,7 @@ namespace Backend.Facades
     /// </summary>
     public class BoardFacade
     {
-        private Dictionary<string, User> users;
+        private UserFacade _userFacade; 
 
 
         /// <summary>
