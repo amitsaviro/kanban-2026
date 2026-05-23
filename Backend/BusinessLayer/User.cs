@@ -8,10 +8,55 @@ namespace Backend.BusinessLayer
     /// </summary>
     public class User
     {
+        // Private fields protecting the internal state of the entity
         private string _email;
         private string _password;
         private bool _isLoggedIn;
         private Dictionary<string, Board> _boards;
+
+
+        /// <summary>
+        /// Initializes a new instance of the User class - ctor
+        /// Precondition: Email and password must be validated by the Facade prior to instantiation.
+        /// Postcondition: User is created and allocated an empty dictionary of boards.
+        /// </summary>
+        /// <param name="email">The validated, lowercase unique email address.</param>
+        /// <param name="password">The validated password that meets complexity rules.</param>
+        public User(string email, string password)
+        {
+            _email = email;
+            _password = password;
+            
+            // The user is automatically logged in upon successful registration
+            _isLoggedIn = false; 
+            
+            // New users have no boards by default. Dictionary prevents duplicate board names.
+            _boards = new Dictionary<string, Board>(); 
+        }
+
+
+        /// <summary>
+        /// Gets the unique email address of the user.
+        /// </summary>
+        public string Email
+        {
+            get
+            {
+                return _email;
+            }
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether the user is currently logged into the system.
+        /// </summary>
+        public bool IsLoggedIn
+        {
+            get
+            {
+                return _isLoggedIn;
+            }
+        }
+
 
         /// <summary>
         /// Authenticates the user with the provided password.
@@ -20,7 +65,17 @@ namespace Backend.BusinessLayer
         /// <exception cref="InvalidOperationException">Thrown if user is already logged in or password mismatch.</exception>
         public void Login(string password)
         {
-            throw new NotImplementedException();
+            if (_isLoggedIn)
+            {
+                throw new InvalidOperationException("User is already logged in.");
+            }
+            
+            if (_password != password)
+            {
+                throw new InvalidOperationException("Password mismatch.");
+            }
+
+            _isLoggedIn = true;
         }
 
         /// <summary>
@@ -28,7 +83,12 @@ namespace Backend.BusinessLayer
         /// </summary>
         public void Logout()
         {
-            throw new NotImplementedException();
+            if (!_isLoggedIn)
+            {
+                throw new InvalidOperationException("User is not logged in.");
+            }
+
+            _isLoggedIn = false;
         }
 
         /// <summary>
