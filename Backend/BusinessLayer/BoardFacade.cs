@@ -1,6 +1,7 @@
 using System;
 using Backend.BusinessLayer;
 using System.Collections.Generic;
+using System.Text.Json;
 
 namespace Backend.Facades
 {
@@ -13,6 +14,8 @@ namespace Backend.Facades
         private UserFacade _userFacade; 
 
 
+        public BoardFacade(UserFacade userFacade) { this._userFacade = userFacade; }
+
         /// <summary>
         /// Creates a new board for the specified user.
         /// </summary>
@@ -23,7 +26,13 @@ namespace Backend.Facades
         /// Postcondition: A new empty board is added to the user's board list.
         /// </remarks>
         /// <exception cref="ArgumentException">Thrown if board name already exists or user is not logged in.</exception>
-        public void CreateBoard(string email, string boardName) => throw new NotImplementedException();
+        public void CreateBoard(string email, string boardName)
+        {
+            if (_userFacade.isLoggedIn(email) && _userFacade.GetUser(email).GetBoard(boardName) == null)
+                _userFacade.GetUser(email).AddBoard(boardName);
+            else
+                throw new AggregateException("board name already exists or user is not logged in");
+        }
 
         /// <summary>
         /// Deletes an existing board.
@@ -35,7 +44,12 @@ namespace Backend.Facades
         /// Postcondition: The board is removed from the user's system.
         /// </remarks>
         /// <exception cref="ArgumentException">Thrown if board does not exist or user is not the owner.</exception>
-        public void DeleteBoard(string email, string boardName) => throw new NotImplementedException();
+        public void DeleteBoard(string email, string boardName)
+        {
+            if (_userFacade.GetUser(email).GetBoard(boardName) == null || !_userFacade.isLoggedIn(email))
+                throw new ArgumentException("board does not exist or user is not the owner");
+            _userFacade.GetUser(email).RemoveBoard(boardName);
+        }
 
 
 
@@ -51,7 +65,12 @@ namespace Backend.Facades
         /// Postcondition: The column's capacity limit is updated.
         /// </remarks>
         /// <exception cref="ArgumentException">Thrown if limit is invalid or column does not exist.</exception>
-        public void LimitColumn(string email, string boardName, int columnOrdinal, int limit) => throw new NotImplementedException();
+        public void LimitColumn(string email, string boardName, int columnOrdinal, int limit)
+        {
+            if(_userFacade.GetUser(email).GetBoard(boardName) == null)
+                throw new ArgumentException("there is no board");
+            _userFacade.GetUser(email).GetBoard(boardName).LimitColumn(columnOrdinal, limit);
+        }
 
 
         /// <summary>

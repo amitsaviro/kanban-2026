@@ -51,5 +51,17 @@ namespace Backend.Facades
         {
             throw new NotImplementedException();
         }
+
+        public bool isLoggedIn(string email)
+        {
+            if (users.ContainsKey(email)) { return users[email].IsLoggedIn; }
+            return false;
+        }
+
+        public User GetUser(string email)
+        {
+            if (users.ContainsKey(email)) { return users[email]; }
+            return null;
+        }
     }
 }

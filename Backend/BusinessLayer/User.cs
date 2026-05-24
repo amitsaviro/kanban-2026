@@ -61,5 +61,12 @@ namespace Backend.BusinessLayer
         {
             throw new NotImplementedException();
         }
+        public bool IsLoggedIn
+        {
+            get
+            {
+                return _isLoggedIn;
+            }
+        }
     }
 }

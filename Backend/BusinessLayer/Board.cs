@@ -56,7 +56,7 @@ namespace Backend.BusinessLayer
         public void LimitColumn(int columnOrdinal, int limit)
         {
             if (columnOrdinal > 2 || columnOrdinal < 0)
-                throw new ArgumentException();
+                throw new ArgumentException("the column ordinal is not vaild");
             _columns[columnOrdinal].SetLimit(limit);
         }
 
@@ -69,7 +69,7 @@ namespace Backend.BusinessLayer
         public Column GetColumn(int columnOrdinal)
         {
             if (columnOrdinal > 2 || columnOrdinal < 0)
-                throw new ArgumentException();
+                throw new ArgumentException("the column ordinal is not vaild");
             return _columns[columnOrdinal];
         }
 
@@ -81,5 +81,13 @@ namespace Backend.BusinessLayer
         {
             return _columns[1].GetTasks();
         }
+
+        public string name
+        {
+            get
+            {
+                return _name;
+            }
+        } 
     }
 }
