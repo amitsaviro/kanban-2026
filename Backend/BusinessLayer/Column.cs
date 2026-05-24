@@ -69,5 +69,7 @@ namespace Backend.BusinessLayer
                 throw new ArgumentException("limit is smaller then the currnt count or smaller then 0");
            this._limit = limit;
         }
+
+        public List<Task> GetTasks() { return _tasks; }
     }
 }

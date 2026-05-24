@@ -21,7 +21,15 @@ namespace Backend.BusinessLayer
         /// <returns>The created Task object.</returns>
         /// <exception cref="ArgumentException">Thrown if inputs violate length or content constraints.</exception>
         /// <exception cref="InvalidOperationException">Thrown if the column exceeds its task limit.</exception>
-        public Task AddTask(string title, string description, DateTime dueDate) => throw new NotImplementedException();
+        public Task AddTask(string title, string description, DateTime dueDate)
+        {
+            Task task = new Task();
+            task.UpdateTitle(title);
+            task.UpdateDescription(description);
+            task.UpdateDueDate(dueDate);
+            _columns[0].AddTask(task);
+            return task;
+        }
 
         /// <summary>
         /// Moves a task between columns (Backlog -> In Progress -> Done).
@@ -29,7 +37,14 @@ namespace Backend.BusinessLayer
         /// <param name="columnOrdinal">The current column index.</param>
         /// <param name="taskId">The unique ID of the task.</param>
         /// <exception cref="InvalidOperationException">Thrown if the move is not allowed or destination column is full.</exception>
-        public void MoveTask(int columnOrdinal, int taskId) => throw new NotImplementedException();
+        public void MoveTask(int columnOrdinal, int taskId)
+        {
+            Task task = _columns[columnOrdinal].RemoveTask(taskId);
+            if (columnOrdinal < 2)
+                _columns[columnOrdinal + 1].AddTask(task);
+            else
+                _columns[0].AddTask(task);
+        }
 
         /// <summary>
         /// Limits the maximum number of tasks allowed in a column.
@@ -38,7 +53,12 @@ namespace Backend.BusinessLayer
         /// <param name="limit">The max number of tasks.</param>
         /// <exception cref="ArgumentException">Thrown if columnOrdinal is invalid or limit is invalid.</exception>
         /// <exception cref="InvalidOperationException">Thrown if the new limit is less than the current task count in the column.</exception>
-        public void LimitColumn(int columnOrdinal, int limit) => throw new NotImplementedException();
+        public void LimitColumn(int columnOrdinal, int limit)
+        {
+            if (columnOrdinal > 2 || columnOrdinal < 0)
+                throw new ArgumentException();
+            _columns[columnOrdinal].SetLimit(limit);
+        }
 
         /// <summary>
         /// Retrieves a specific column object by its index.
@@ -46,12 +66,20 @@ namespace Backend.BusinessLayer
         /// <param name="columnOrdinal">The column index (0, 1, or 2).</param>
         /// <returns>The Column object.</returns>
         /// <exception cref="ArgumentException">Thrown if columnOrdinal is invalid.</exception>
-        public Column GetColumn(int columnOrdinal) => throw new NotImplementedException();
+        public Column GetColumn(int columnOrdinal)
+        {
+            if (columnOrdinal > 2 || columnOrdinal < 0)
+                throw new ArgumentException();
+            return _columns[columnOrdinal];
+        }
 
         /// <summary>
         /// Returns all tasks currently in the 'in progress' column across the board.
         /// </summary>
         /// <returns>A list of tasks in progress.</returns>
-        public List<Task> GetInProgressTasks() => throw new NotImplementedException();
+        public List<Task> GetInProgressTasks()
+        {
+            return _columns[1].GetTasks();
+        }
     }
 }
