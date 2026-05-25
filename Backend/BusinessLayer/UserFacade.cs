@@ -257,11 +257,5 @@ namespace Backend.Facades
             if (users.ContainsKey(email)) { return users[email].IsLoggedIn; }
             return false;
         }
-
-        public User GetUser(string email)
-        {
-            if (users.ContainsKey(email)) { return users[email]; }
-            return null;
-        }
     }
 }

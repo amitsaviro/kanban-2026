@@ -15,16 +15,12 @@ namespace Backend.BusinessLayer
 
         public Board(string name)
         {
+            // name of the new board
             _name = name;
-<<<<<<< HEAD
-            _columns = new List<Column>();
+            //task IDs start at 0 and increment with each new task (unique per board, Requirement 5a)
             _nextTaskId = 0;
-        } 
-=======
-            // Y - task IDs start at 0 and increment with each new task (unique per board, Requirement 5a)
-            _nextTaskId = 0;
-            // Y - every board always has exactly 3 columns in this fixed order (Requirement 4)
-            // (ColumnType)0 = Backlog, (ColumnType)1 = InProgress, (ColumnType)2 = Done
+            //every board always has exactly 3 columns in this fixed order (Requirement 4)
+            //(ColumnType)0 = Backlog, (ColumnType)1 = InProgress, (ColumnType)2 = Done
             _columns = new List<Column>
             {
                 new Column("backlog", ColumnType.Backlog),
@@ -35,26 +31,12 @@ namespace Backend.BusinessLayer
 
         // Y - read-only property for the board name
         public string Name => _name;
-
->>>>>>> main
         /// <summary>
         /// Adds a new task to the backlog column.
         /// </summary>
         /// <param name="title">Task title, max 50 chars, not empty.</param>
         /// <param name="description">Optional description, max 300 chars.</param>
         /// <param name="dueDate">Task due date.</param>
-<<<<<<< HEAD
-        /// <returns>The created Task object.</returns>
-        /// <exception cref="ArgumentException">Thrown if inputs violate length or content constraints.</exception>
-        /// <exception cref="InvalidOperationException">Thrown if the column exceeds its task limit.</exception>
-        public Task AddTask(string title, string description, DateTime dueDate)
-        {
-            Task task = new Task();
-            task.UpdateTitle(title);
-            task.UpdateDescription(description);
-            task.UpdateDueDate(dueDate);
-            _columns[0].AddTask(task);
-=======
         /// <returns>The newly created Task.</returns>
         /// <exception cref="ArgumentException">Thrown if title or description violates constraints.</exception>
         /// <exception cref="InvalidOperationException">Thrown if backlog column is at its limit.</exception>
@@ -69,52 +51,12 @@ namespace Backend.BusinessLayer
 
             // Y - only increment the ID counter after successfully adding the task
             _nextTaskId++;
->>>>>>> main
             return task;
         }
 
         /// <summary>
         /// Moves a task from its current column to the next one (backlog→in progress, in progress→done).
         /// </summary>
-<<<<<<< HEAD
-        /// <param name="columnOrdinal">The current column index.</param>
-        /// <param name="taskId">The unique ID of the task.</param>
-        /// <exception cref="InvalidOperationException">Thrown if the move is not allowed or destination column is full.</exception>
-        public void MoveTask(int columnOrdinal, int taskId)
-        {
-            Task task = _columns[columnOrdinal].RemoveTask(taskId);
-            if (columnOrdinal < 2)
-                _columns[columnOrdinal + 1].AddTask(task);
-            else
-                _columns[0].AddTask(task);
-        }
-
-        /// <summary>
-        /// Limits the maximum number of tasks allowed in a column.
-        /// </summary>
-        /// <param name="columnOrdinal">The column index (0, 1, or 2).</param>
-        /// <param name="limit">The max number of tasks.</param>
-        /// <exception cref="ArgumentException">Thrown if columnOrdinal is invalid or limit is invalid.</exception>
-        /// <exception cref="InvalidOperationException">Thrown if the new limit is less than the current task count in the column.</exception>
-        public void LimitColumn(int columnOrdinal, int limit)
-        {
-            if (columnOrdinal > 2 || columnOrdinal < 0)
-                throw new ArgumentException("the column ordinal is not vaild");
-            _columns[columnOrdinal].SetLimit(limit);
-        }
-
-        /// <summary>
-        /// Retrieves a specific column object by its index.
-        /// </summary>
-        /// <param name="columnOrdinal">The column index (0, 1, or 2).</param>
-        /// <returns>The Column object.</returns>
-        /// <exception cref="ArgumentException">Thrown if columnOrdinal is invalid.</exception>
-        public Column GetColumn(int columnOrdinal)
-        {
-            if (columnOrdinal > 2 || columnOrdinal < 0)
-                throw new ArgumentException("the column ordinal is not vaild");
-            return _columns[columnOrdinal];
-=======
         /// <param name="columnOrdinal">Current column index (0 or 1). Cannot move from done (2).</param>
         /// <param name="taskId">ID of the task to move.</param>
         /// <exception cref="ArgumentException">Thrown if columnOrdinal is invalid.</exception>
@@ -146,27 +88,11 @@ namespace Backend.BusinessLayer
                 _columns[columnOrdinal].AddTask(task);
                 throw;
             }
->>>>>>> main
         }
 
         /// <summary>
         /// Sets the task limit on a specific column.
         /// </summary>
-<<<<<<< HEAD
-        /// <returns>A list of tasks in progress.</returns>
-        public List<Task> GetInProgressTasks()
-        {
-            return _columns[1].GetTasks();
-        }
-
-        public string name
-        {
-            get
-            {
-                return _name;
-            }
-        } 
-=======
         /// <param name="columnOrdinal">Column index (0-2).</param>
         /// <param name="limit">Max tasks. -1 means no limit.</param>
         /// <exception cref="ArgumentException">Thrown if columnOrdinal is invalid.</exception>
@@ -199,6 +125,5 @@ namespace Backend.BusinessLayer
             // Y - new List<Task>(...) creates a copy of the list so callers can't accidentally modify our internal data
             return new List<Task>(_columns[(int)ColumnType.InProgress].Tasks);
         }
->>>>>>> main
     }
 }

@@ -16,14 +16,14 @@ namespace BackendTests
             Console.WriteLine("Starting Tests...\n");
 
             UserTests userTests = new UserTests();
-           // BoardTests boardTests = new BoardTests();
+            BoardTests boardTests = new BoardTests();
            // TaskTests taskTests = new TaskTests();
 
             userTests.RunAll();
 
             //Console.WriteLine("\n-------------------\n");
 
-            //boardTests.RunAll();
+            boardTests.RunAll();
 
             //Console.WriteLine("\n-------------------\n");
 
