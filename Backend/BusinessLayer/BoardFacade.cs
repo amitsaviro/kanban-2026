@@ -82,7 +82,8 @@ namespace Backend.Facades
         /// <returns>A JSON string with the column's limit, unless an error occurs.</returns>
         public int GetColumnLimit(string email, string boardName, int columnOrdinal)
         {
-            throw new NotImplementedException();
+            // returns the limit from the spacific user board
+            return _userFacade.GetUser(email).GetBoard(boardName).GetColumn(columnOrdinal).limit;
         }
 
         /// <summary>
@@ -94,7 +95,8 @@ namespace Backend.Facades
         /// <returns>A JSON string with the column's name, unless an error occurs.</returns>
         public string GetColumnName(string email, string boardName, int columnOrdinal)
         {
-            throw new NotImplementedException();
+            // the methode returns the name of spacific column from spacific board of spacific user
+            return _userFacade.GetUser(email).GetBoard(boardName).GetColumn(columnOrdinal).name;
         }
 
         /// <summary>
@@ -106,7 +108,8 @@ namespace Backend.Facades
         /// <returns>A JSON string with a list of the column's tasks, unless an error occurs.</returns>
         public List<Task> GetColumn(string email, string boardName, int columnOrdinal)
         {
-            throw new NotImplementedException();
+            //returns the list of all the tasks of a spacific column in the spacific board
+           return _userFacade.GetUser(email).GetBoard(boardName).GetColumn(columnOrdinal).GetTasks();
         }
     }
 }

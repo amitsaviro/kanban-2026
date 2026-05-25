@@ -12,6 +12,12 @@ namespace Backend.BusinessLayer
         private List<Column> _columns;
         private int _nextTaskId;
 
+        public Board(string name)
+        {
+            _name = name;
+            _columns = new List<Column>();
+            _nextTaskId = 0;
+        } 
         /// <summary>
         /// Adds a new task to the 'backlog' column.
         /// </summary>

@@ -70,6 +70,15 @@ namespace Backend.BusinessLayer
            this._limit = limit;
         }
 
+        public int limit
+        {
+            get { return _limit; }
+        }
+        public string name
+        {
+            get { return _name; }
+            set { _name = value; }
+        }
         public List<Task> GetTasks() { return _tasks; }
     }
 }
