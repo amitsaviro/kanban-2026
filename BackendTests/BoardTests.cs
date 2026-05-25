@@ -1,5 +1,6 @@
-using System;
 using Backend.ServiceLayer;
+using System;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace BackendTests
 {
@@ -16,10 +17,12 @@ namespace BackendTests
         {
             Console.WriteLine("Running TestCreateBoard...");
 
-            userService.Register("board@test.com", "Password1");
-
+            string email = "yuval@test.com";
+            string passward = "Password1";
+            userService.Register(email, passward);
+            userService.Login(email, passward);
             string result = boardService.CreateBoard(
-                "board@test.com",
+                email,
                 "Work"
             );
 
@@ -33,16 +36,17 @@ namespace BackendTests
         public void TestDuplicateBoard()
         {
             Console.WriteLine("Running TestDuplicateBoard...");
-
-            userService.Register("dupboard@test.com", "Password1");
-
+            string email = "dupboard@test.com";
+            string passward = "Password1";
+            userService.Register(email,passward);
+            userService.Login(email, passward);
             boardService.CreateBoard(
-                "dupboard@test.com",
+                email,
                 "Work"
             );
 
             string result = boardService.CreateBoard(
-                "dupboard@test.com",
+                email,
                 "Work"
             );
 
@@ -56,9 +60,10 @@ namespace BackendTests
         public void TestDeleteBoard()
         {
             Console.WriteLine("Running TestDeleteBoard...");
-
-            userService.Register("delete@test.com", "Password1");
-
+            string email = "delete@test.com";
+            string passward = "Password1";
+            userService.Register(email,passward);
+            userService.Login(email, passward);
             boardService.CreateBoard(
                 "delete@test.com",
                 "School"
