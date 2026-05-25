@@ -27,8 +27,8 @@ namespace Backend.BusinessLayer
             _email = email;
             _password = password;
             
-            // The user is automatically logged in upon successful registration
-            _isLoggedIn = false; 
+            // Y - user starts as logged out; UserFacade.Register calls Login() right after creation to satisfy Requirement 6
+            _isLoggedIn = false;
             
             // New users have no boards by default. Dictionary prevents duplicate board names.
             _boards = new Dictionary<string, Board>(); 
@@ -95,10 +95,20 @@ namespace Backend.BusinessLayer
         /// Adds a new board to the user's collection.
         /// </summary>
         /// <param name="boardName">The unique name of the board to add.</param>
-        /// <exception cref="ArgumentException">Thrown if board name already exists.</exception>
+        /// <exception cref="ArgumentException">Thrown if board name is empty or already exists.</exception>
         public void AddBoard(string boardName)
         {
-            throw new NotImplementedException();
+            if (string.IsNullOrWhiteSpace(boardName))
+                throw new ArgumentException("Board name cannot be empty.");
+
+            // Y - ToLower() makes the key case-insensitive so "Work" and "work" are treated as the same board (Requirement 10)
+            string key = boardName.Trim().ToLower();
+
+            if (_boards.ContainsKey(key))
+                throw new ArgumentException($"A board named '{boardName}' already exists.");
+
+            // Y - create a new Board object and store it in the dictionary under the lowercase key
+            _boards.Add(key, new Board(boardName));
         }
 
         /// <summary>
@@ -108,7 +118,13 @@ namespace Backend.BusinessLayer
         /// <exception cref="ArgumentException">Thrown if board does not exist.</exception>
         public void RemoveBoard(string boardName)
         {
-            throw new NotImplementedException();
+            // Y - same lowercase key as AddBoard so the lookup is also case-insensitive
+            string key = boardName.Trim().ToLower();
+
+            if (!_boards.ContainsKey(key))
+                throw new ArgumentException($"Board '{boardName}' does not exist.");
+
+            _boards.Remove(key);
         }
 
         /// <summary>
@@ -119,7 +135,26 @@ namespace Backend.BusinessLayer
         /// <exception cref="ArgumentException">Thrown if board does not exist.</exception>
         public Board GetBoard(string boardName)
         {
-            throw new NotImplementedException();
+            string key = boardName.Trim().ToLower();
+
+            // Y - TryGetValue is the safe way to look up a dictionary key in C#
+            // it returns true/false and puts the value into the 'board' variable using the 'out' keyword
+            // 'out' means: the method will fill this variable for you — it's an output parameter
+            if (!_boards.TryGetValue(key, out Board board))
+                throw new ArgumentException($"Board '{boardName}' does not exist.");
+
+            return board;
+        }
+
+        /// <summary>
+        /// Returns all boards belonging to this user.
+        /// </summary>
+        /// <returns>A collection of all the user's boards.</returns>
+        public IEnumerable<Board> GetBoards()
+        {
+            // Y - IEnumerable<Board> is an interface meaning "something you can loop over"
+            // returning _boards.Values gives the caller all boards without exposing the internal dictionary
+            return _boards.Values;
         }
     }
 }

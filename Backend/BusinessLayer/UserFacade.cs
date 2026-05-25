@@ -75,6 +75,9 @@ namespace Backend.Facades
             User newUser = new User(cleanedEmail, password);
             users.Add(cleanedEmail, newUser);
 
+            // Y - Requirement 6: user is automatically logged in right after registering, so they don't need to call Login again
+            newUser.Login(password);
+
             log.Info($"User successfully registered with email: {cleanedEmail}");
         }
 
@@ -124,6 +127,42 @@ namespace Backend.Facades
             }
 
             log.Info($"User successfully logged in: {cleanedEmail}");
+        }
+
+        /// <summary>
+        /// Retrieves a User object by email. Used internally by BoardFacade and TaskFacade.
+        /// </summary>
+        /// <param name="email">The user's email address.</param>
+        /// <returns>The User object.</returns>
+        /// <exception cref="ArgumentException">Thrown if no user with that email exists.</exception>
+        public User GetUser(string email)
+        {
+            // Y - normalize email the same way Register does, so lookup is always consistent
+            string cleanedEmail = email.Trim().ToLower();
+
+            if (!users.TryGetValue(cleanedEmail, out User user))
+                throw new ArgumentException("No user found with the provided email address.");
+
+            return user;
+        }
+
+        /// <summary>
+        /// Retrieves a User and verifies they are currently logged in.
+        /// Called by BoardFacade and TaskFacade before any board/task operation.
+        /// </summary>
+        /// <param name="email">The user's email address.</param>
+        /// <returns>The logged-in User object.</returns>
+        /// <exception cref="ArgumentException">Thrown if user does not exist.</exception>
+        /// <exception cref="InvalidOperationException">Thrown if user exists but is not logged in.</exception>
+        public User GetLoggedInUser(string email)
+        {
+            User user = GetUser(email);
+
+            // Y - most operations require the user to be logged in; this check lives here so we don't repeat it everywhere
+            if (!user.IsLoggedIn)
+                throw new InvalidOperationException($"User '{email}' is not logged in.");
+
+            return user;
         }
 
         /// <summary>
