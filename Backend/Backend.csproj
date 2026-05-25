@@ -6,4 +6,8 @@
     <AssemblyName>IntroSE.Kanban.Backend</AssemblyName>
     <OutputType>Library</OutputType>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="log4net" Version="3.3.1" />
+  </ItemGroup>
 </Project>
