@@ -251,5 +251,11 @@ namespace Backend.Facades
             var regex = new Regex(@"^[^@\s]+@[^@\s]+\.[^@\s]+$"); 
             return regex.IsMatch(email);
         }
+
+        public bool isLoggedIn(string email)
+        {
+            if (users.ContainsKey(email)) { return users[email].IsLoggedIn; }
+            return false;
+        }
     }
 }

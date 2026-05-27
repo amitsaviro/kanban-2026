@@ -8,13 +8,13 @@ namespace Backend.BusinessLayer
     /// </summary>
     public class Column
     {
-        // Y - private fields; the column controls its own data
+        // private fields; the column controls its own data
         private string _name;
         private ColumnType _type;
         private int _limit;
         private List<Task> _tasks;
 
-        // Y - -1 means "no limit" throughout the system (Requirement 12)
+        // -1 means "no limit" throughout the system (Requirement 12)
         private const int NoLimit = -1;
 
         /// <summary>
@@ -26,17 +26,17 @@ namespace Backend.BusinessLayer
         {
             _name = name;
             _type = type;
-            // Y - columns start with no limit by default (Requirement 12)
+            // columns start with no limit by default (Requirement 12)
             _limit = NoLimit;
-            // Y - List<Task> is a resizable list of Task objects, like ArrayList in other languages
+            // List<Task> is a resizable list of Task objects, like ArrayList in other languages
             _tasks = new List<Task>();
         }
 
-        // Y - read-only properties so outside code can read but not overwrite these directly
+        // read-only properties so outside code can read but not overwrite these directly
         public string Name => _name;
         public ColumnType Type => _type;
         public int Limit => _limit;
-        // Y - returns the internal list directly so callers can iterate tasks; we trust our own layer not to misuse it
+        // returns the internal list directly so callers can iterate tasks; we trust our own layer not to misuse it
         public List<Task> Tasks => _tasks;
 
         /// <summary>
@@ -97,6 +97,8 @@ namespace Backend.BusinessLayer
         /// <summary>
         /// Sets the maximum number of tasks allowed in this column.
         /// </summary>
+        /// <param name="limit">The max number of tasks.</param>
+        /// <exception cref="ArgumentException">Thrown if limit is negative or smaller than current tasks count.</exception>
         /// <param name="limit">The new limit. Use -1 for no limit.</param>
         /// <exception cref="ArgumentException">Thrown if limit is invalid or less than current task count.</exception>
         public void SetLimit(int limit)
@@ -111,5 +113,7 @@ namespace Backend.BusinessLayer
 
             _limit = limit;
         }
+        public List<Task> GetTasks() { return _tasks; }
     }
+
 }

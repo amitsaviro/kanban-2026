@@ -26,12 +26,12 @@ namespace Backend.BusinessLayer
         {
             _email = email;
             _password = password;
-            
+
             // Y - user starts as logged out; UserFacade.Register calls Login() right after creation to satisfy Requirement 6
             _isLoggedIn = false;
-            
+
             // New users have no boards by default. Dictionary prevents duplicate board names.
-            _boards = new Dictionary<string, Board>(); 
+            _boards = new Dictionary<string, Board>();
         }
 
 
@@ -69,7 +69,7 @@ namespace Backend.BusinessLayer
             {
                 throw new InvalidOperationException("User is already logged in.");
             }
-            
+
             if (_password != password)
             {
                 throw new InvalidOperationException("Password mismatch.");
@@ -155,6 +155,7 @@ namespace Backend.BusinessLayer
             // Y - IEnumerable<Board> is an interface meaning "something you can loop over"
             // returning _boards.Values gives the caller all boards without exposing the internal dictionary
             return _boards.Values;
+
         }
     }
 }

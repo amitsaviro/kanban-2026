@@ -1,5 +1,9 @@
-using System;
+using Backend.BusinessLayer;
 using Backend.Facades;
+using Microsoft.VisualBasic;
+using System;
+using System.Collections.Generic;
+using System.Text.Json;
 
 namespace Backend.ServiceLayer
 {
@@ -8,7 +12,14 @@ namespace Backend.ServiceLayer
     /// </summary>
     public class TaskService
     {
-        private TaskFacade _taskFacade; 
+        private TaskFacade _taskFacade;
+        /// <summary>
+        /// Initializes a new instance of the BoardService class and its underlying Facade.
+        /// </summary>
+        public TaskService()
+        {
+            _taskFacade = new TaskFacade();
+        }
         /// <summary>
         /// Adds a new task to the 'backlog' column of a specific board.
         /// </summary>
@@ -22,7 +33,20 @@ namespace Backend.ServiceLayer
         /// <exception cref="Exception">Thrown if 'backlog' column has reached its capacity limit.</exception>
         public string AddTask(string email, string boardName, string title, string description, DateTime dueDate)
         {
-            throw new NotImplementedException();
+            try
+            {
+                // try to add a new task to the backlog coloumn via facade
+                _taskFacade.AddTask(email,boardName,title,description,dueDate);
+                // On success, return an empty response (both fields are null)
+                var response = new { ErrorMessage = (string)null, ReturnValue = (object)null };
+                return JsonSerializer.Serialize(response);
+            }
+            catch (Exception ex)
+            {
+                // If the Facade threw an exception, catch it and return its message in the JSON
+                var response = new { ErrorMessage = ex.Message, ReturnValue = (object)null };
+                return JsonSerializer.Serialize(response);
+            }
         }
 
         ///////////////////////////// yuval - new name here ///////////////////////
@@ -37,8 +61,22 @@ namespace Backend.ServiceLayer
         /// <exception cref="ArgumentException">Thrown if task does not exist or invalid move attempted.</exception>
         public string AdvanceTask(string email, string boardName, int columnOrdinal, int taskId)
         {
-            throw new NotImplementedException();
+            try
+            {
+                // try to move a task to the next logical coloumn via facade
+                _taskFacade.AdvanceTask(email, boardName, columnOrdinal, taskId);
+                // On success, return an empty response (both fields are null)
+                var response = new { ErrorMessage = (string)null, ReturnValue = (object)null };
+                return JsonSerializer.Serialize(response);
+            }
+            catch (Exception ex)
+            {
+                // If the Facade threw an exception, catch it and return its message in the JSON
+                var response = new { ErrorMessage = ex.Message, ReturnValue = (object)null };
+                return JsonSerializer.Serialize(response);
+            }
         }
+
         //////////////////////////////////////////////////////////////////////////
 
         /// <summary>
@@ -53,7 +91,20 @@ namespace Backend.ServiceLayer
         /// <exception cref="ArgumentException">Thrown if task is already done or title is invalid.</exception>
         public string UpdateTaskTitle(string email, string boardName, int columnOrdinal, int taskId, string title)
         {
-            throw new NotImplementedException();
+            try
+            {
+                // try to updates the title of an existing task via facade. 
+                _taskFacade.UpdateTaskTitle(email, boardName, columnOrdinal, taskId, title);
+                // On success, return an empty response (both fields are null)
+                var response = new { ErrorMessage = (string)null, ReturnValue = (object)null };
+                return JsonSerializer.Serialize(response);
+            }
+            catch (Exception ex)
+            {
+                // If the Facade threw an exception, catch it and return its message in the JSON
+                var response = new { ErrorMessage = ex.Message, ReturnValue = (object)null };
+                return JsonSerializer.Serialize(response);
+            }
         }
 
         /// <summary>
@@ -68,7 +119,20 @@ namespace Backend.ServiceLayer
         /// <exception cref="ArgumentException">Thrown if task is already done or description is invalid.</exception>
         public string UpdateTaskDescription(string email, string boardName, int columnOrdinal, int taskId, string description)
         {
-            throw new NotImplementedException();
+            try
+            {
+                // try to updates the description of an existing task via facade. 
+                _taskFacade.UpdateTaskDescription(email, boardName, columnOrdinal, taskId, description);
+                // On success, return an empty response (both fields are null)
+                var response = new { ErrorMessage = (string)null, ReturnValue = (object)null };
+                return JsonSerializer.Serialize(response);
+            }
+            catch (Exception ex)
+            {
+                // If the Facade threw an exception, catch it and return its message in the JSON
+                var response = new { ErrorMessage = ex.Message, ReturnValue = (object)null };
+                return JsonSerializer.Serialize(response);
+            }
         }
 
         /// <summary>
@@ -83,7 +147,20 @@ namespace Backend.ServiceLayer
         /// <exception cref="ArgumentException">Thrown if task is already done.</exception>
         public string UpdateTaskDueDate(string email, string boardName, int columnOrdinal, int taskId, DateTime dueDate)
         {
-            throw new NotImplementedException();
+            try
+            {
+                // try to updates the due date of an existing task via facade. 
+                _taskFacade.UpdateTaskDueDate(email,boardName,columnOrdinal, taskId, dueDate);
+                // On success, return an empty response (both fields are null)
+                var response = new { ErrorMessage = (string)null, ReturnValue = (object)null };
+                return JsonSerializer.Serialize(response);
+            }
+            catch (Exception ex)
+            {
+                // If the Facade threw an exception, catch it and return its message in the JSON
+                var response = new { ErrorMessage = ex.Message, ReturnValue = (object)null };
+                return JsonSerializer.Serialize(response);
+            }
         }
         ///////////////////////////// yuval - new name here ///////////////////////
         /// <summary>
@@ -93,7 +170,20 @@ namespace Backend.ServiceLayer
         /// <returns>A JSON string containing the list of tasks.</returns>
         public string InProgressTasks(string email)
         {
-            throw new NotImplementedException();
+            try
+            {
+                // try to retrieves all 'in progress' tasks from all boards owned by the user via facade. 
+                List<Task> tasks = _taskFacade.InProgressTasks(email); 
+                // On success, return an empty response (both fields are null)
+                var response = new { ErrorMessage = (string)null, ReturnValue = tasks };
+                return JsonSerializer.Serialize(response);
+            }
+            catch (Exception ex)
+            {
+                // If the Facade threw an exception, catch it and return its message in the JSON
+                var response = new { ErrorMessage = ex.Message, ReturnValue = (object)null };
+                return JsonSerializer.Serialize(response);
+            }
         }
         //////////////////////////////////////////////////////////////////////////
     }

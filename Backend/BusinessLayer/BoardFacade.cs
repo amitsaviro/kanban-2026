@@ -25,7 +25,6 @@ namespace Backend.Facades
             // Y - standalone mode: each service manages its own user state
             _userFacade = new UserFacade();
         }
-
         /// <summary>
         /// Injection constructor — shares a UserFacade from outside (used by GradingService so all services see the same users).
         /// </summary>

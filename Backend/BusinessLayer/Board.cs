@@ -15,11 +15,12 @@ namespace Backend.BusinessLayer
 
         public Board(string name)
         {
+            // name of the new board
             _name = name;
-            // Y - task IDs start at 0 and increment with each new task (unique per board, Requirement 5a)
+            //task IDs start at 0 and increment with each new task (unique per board, Requirement 5a)
             _nextTaskId = 0;
-            // Y - every board always has exactly 3 columns in this fixed order (Requirement 4)
-            // (ColumnType)0 = Backlog, (ColumnType)1 = InProgress, (ColumnType)2 = Done
+            //every board always has exactly 3 columns in this fixed order (Requirement 4)
+            //(ColumnType)0 = Backlog, (ColumnType)1 = InProgress, (ColumnType)2 = Done
             _columns = new List<Column>
             {
                 new Column("backlog", ColumnType.Backlog),
@@ -30,7 +31,6 @@ namespace Backend.BusinessLayer
 
         // Y - read-only property for the board name
         public string Name => _name;
-
         /// <summary>
         /// Adds a new task to the backlog column.
         /// </summary>
