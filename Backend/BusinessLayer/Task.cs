@@ -72,10 +72,12 @@ namespace Backend.BusinessLayer
         /// <exception cref="ArgumentException">Thrown if description exceeds 300 characters.</exception>
         public void UpdateDescription(string description)
         {
-            // Y - null is allowed (means no description), but a non-null value must be within limit
-            if (description != null && description.Length > MaxDescriptionLength)
+            // Y - null is not allowed on update; use empty string to clear the description
+            if (description == null)
+                throw new ArgumentException("Description cannot be null.");
+            if (description.Length > MaxDescriptionLength)
                 throw new ArgumentException("Description cannot exceed 300 characters.");
-            _description = description ?? string.Empty;
+            _description = description;
         }
 
         /// <summary>
