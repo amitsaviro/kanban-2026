@@ -15,11 +15,11 @@ namespace BackendTests
             XmlConfigurator.Configure(logRepository, new FileInfo("../Backend/log4net.config"));
             Console.WriteLine("Starting Tests...\n");
 
-            //UserTests userTests = new UserTests();
+            UserTests userTests = new UserTests();
             BoardTests boardTests = new BoardTests();
-            //TaskTests taskTests = new TaskTests();
+            TaskTests taskTests = new TaskTests();
 
-            //userTests.RunAll();
+            userTests.RunAll();
 
             Console.WriteLine("\n-------------------\n");
 
@@ -27,7 +27,7 @@ namespace BackendTests
 
             Console.WriteLine("\n-------------------\n");
 
-            //taskTests.RunAll();
+            taskTests.RunAll();
 
             Console.WriteLine("\nFinished Tests.");
         }

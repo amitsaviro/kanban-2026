@@ -8,8 +8,7 @@ namespace Backend.Facades
 {
     public class UserFacade
     {
-        private Dictionary<string, User> users;
-
+        private static Dictionary<string, User> users = new Dictionary<string, User>();
         // The only static field allowed in the project, used strictly for logging purposes.
         private static readonly ILog log = LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
@@ -19,7 +18,6 @@ namespace Backend.Facades
         /// </summary>
         public UserFacade()
         {
-            users = new Dictionary<string, User>();
         }
         
 
