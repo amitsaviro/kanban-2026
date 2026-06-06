@@ -22,15 +22,16 @@ namespace Backend.ServiceLayer
         }
         /// <summary>
         /// Adds a new task to the 'backlog' column of a specific board.
+        /// Only board members may add tasks.
         /// </summary>
-        /// <param name="email">The user email.</param>
+        /// <param name="email">The user email. Must be logged in and a member of the board.</param>
         /// <param name="boardName">The name of the board.</param>
         /// <param name="title">Task title (max 50 chars, not empty).</param>
         /// <param name="description">Task description (optional, max 300 chars).</param>
         /// <param name="dueDate">The due date for the task.</param>
         /// <returns>A JSON string representing the newly created Task.</returns>
         /// <exception cref="ArgumentException">Thrown if input is malformed, title empty/too long, or description too long.</exception>
-        /// <exception cref="Exception">Thrown if 'backlog' column has reached its capacity limit.</exception>
+        /// <exception cref="InvalidOperationException">Thrown if 'backlog' column is at capacity or user is not a board member.</exception>
         public string AddTask(string email, string boardName, string title, string description, DateTime dueDate)
         {
             try
@@ -52,13 +53,15 @@ namespace Backend.ServiceLayer
         ///////////////////////////// yuval - new name here ///////////////////////
         /// <summary>
         /// Moves a task to the next logical column (Backlog -> In Progress -> Done).
+        /// Only the task's assignee may advance it.
         /// </summary>
-        /// <param name="email">The user email.</param>
+        /// <param name="email">The user email. Must be logged in and be the task's assignee.</param>
         /// <param name="boardName">The name of the board.</param>
         /// <param name="columnOrdinal">The current column index.</param>
         /// <param name="taskId">The ID of the task to move.</param>
         /// <returns>A JSON string confirming the move or error message.</returns>
-        /// <exception cref="ArgumentException">Thrown if task does not exist or invalid move attempted.</exception>
+        /// <exception cref="ArgumentException">Thrown if task does not exist or move is invalid.</exception>
+        /// <exception cref="InvalidOperationException">Thrown if user is not the assignee or task is already done.</exception>
         public string AdvanceTask(string email, string boardName, int columnOrdinal, int taskId)
         {
             try
@@ -81,14 +84,16 @@ namespace Backend.ServiceLayer
 
         /// <summary>
         /// Updates the title of an existing task.
+        /// Only the task's assignee or the board owner may edit a non-done task.
         /// </summary>
-        /// <param name="email">The user email.</param>
+        /// <param name="email">The user email. Must be logged in and be the task's assignee or the board owner.</param>
         /// <param name="boardName">The name of the board.</param>
         /// <param name="columnOrdinal">The current column index.</param>
         /// <param name="taskId">The ID of the task.</param>
         /// <param name="title">New title (max 50 chars, not empty).</param>
         /// <returns>A JSON string confirmation.</returns>
-        /// <exception cref="ArgumentException">Thrown if task is already done or title is invalid.</exception>
+        /// <exception cref="ArgumentException">Thrown if task is done or title is invalid.</exception>
+        /// <exception cref="InvalidOperationException">Thrown if user is not the assignee or board owner.</exception>
         public string UpdateTaskTitle(string email, string boardName, int columnOrdinal, int taskId, string title)
         {
             try
@@ -109,14 +114,16 @@ namespace Backend.ServiceLayer
 
         /// <summary>
         /// Updates the description of an existing task.
+        /// Only the task's assignee or the board owner may edit a non-done task.
         /// </summary>
-        /// <param name="email">The user email.</param>
+        /// <param name="email">The user email. Must be logged in and be the task's assignee or the board owner.</param>
         /// <param name="boardName">The name of the board.</param>
         /// <param name="columnOrdinal">The current column index.</param>
         /// <param name="taskId">The ID of the task.</param>
         /// <param name="description">New description (max 300 chars).</param>
         /// <returns>A JSON string confirmation.</returns>
-        /// <exception cref="ArgumentException">Thrown if task is already done or description is invalid.</exception>
+        /// <exception cref="ArgumentException">Thrown if task is done or description is invalid.</exception>
+        /// <exception cref="InvalidOperationException">Thrown if user is not the assignee or board owner.</exception>
         public string UpdateTaskDescription(string email, string boardName, int columnOrdinal, int taskId, string description)
         {
             try
@@ -137,14 +144,16 @@ namespace Backend.ServiceLayer
 
         /// <summary>
         /// Updates the due date of an existing task.
+        /// Only the task's assignee or the board owner may edit a non-done task.
         /// </summary>
-        /// <param name="email">The user email.</param>
+        /// <param name="email">The user email. Must be logged in and be the task's assignee or the board owner.</param>
         /// <param name="boardName">The name of the board.</param>
         /// <param name="columnOrdinal">The current column index.</param>
         /// <param name="taskId">The ID of the task.</param>
         /// <param name="dueDate">New due date.</param>
         /// <returns>A JSON string confirmation.</returns>
-        /// <exception cref="ArgumentException">Thrown if task is already done.</exception>
+        /// <exception cref="ArgumentException">Thrown if task is done.</exception>
+        /// <exception cref="InvalidOperationException">Thrown if user is not the assignee or board owner.</exception>
         public string UpdateTaskDueDate(string email, string boardName, int columnOrdinal, int taskId, DateTime dueDate)
         {
             try
@@ -164,10 +173,11 @@ namespace Backend.ServiceLayer
         }
         ///////////////////////////// yuval - new name here ///////////////////////
         /// <summary>
-        /// Retrieves all 'in progress' tasks from all boards owned by the user.
+        /// Retrieves all 'in progress' tasks that are assigned to the user, across all boards they are a member of.
         /// </summary>
-        /// <param name="email">The user email.</param>
-        /// <returns>A JSON string containing the list of tasks.</returns>
+        /// <param name="email">The user email. Must be logged in.</param>
+        /// <returns>A JSON string containing the list of in-progress tasks assigned to this user.</returns>
+        /// <exception cref="InvalidOperationException">Thrown if user is not logged in.</exception>
         public string InProgressTasks(string email)
         {
             try
@@ -186,5 +196,32 @@ namespace Backend.ServiceLayer
             }
         }
         //////////////////////////////////////////////////////////////////////////
+
+        /// <summary>
+        /// Assigns a task to a board member.
+        /// An unassigned task may be assigned by any board member to any board member.
+        /// An already-assigned task may only be reassigned by the current assignee or the board owner.
+        /// </summary>
+        /// <param name="email">The email of the user performing the assignment. Must be logged in and a board member.</param>
+        /// <param name="boardName">The name of the board.</param>
+        /// <param name="columnOrdinal">The column index of the task (0 = backlog, 1 = in progress, 2 = done).</param>
+        /// <param name="taskID">The ID of the task to assign.</param>
+        /// <param name="emailAssignee">The email of the user to assign. Must be a board member, or null/empty to unassign.</param>
+        /// <returns>An empty JSON response on success, or an error message.</returns>
+        /// <exception cref="ArgumentException">Thrown if task or assignee does not exist, or assignee is not a member.</exception>
+        /// <exception cref="InvalidOperationException">Thrown if caller lacks permission to reassign or task is done.</exception>
+        public string AssignTask(string email, string boardName, int columnOrdinal, int taskID, string emailAssignee)
+        {
+            try
+            {
+                // Y - placeholder until TaskFacade implements AssignTask
+                throw new NotImplementedException("AssignTask is not yet implemented.");
+            }
+            catch (Exception ex)
+            {
+                var response = new { ErrorMessage = ex.Message, ReturnValue = (object)null };
+                return JsonSerializer.Serialize(response);
+            }
+        }
     }
 }

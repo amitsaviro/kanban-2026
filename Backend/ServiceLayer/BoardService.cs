@@ -48,12 +48,13 @@ namespace Backend.ServiceLayer
         }
 
         /// <summary>
-        /// Deletes a board from the user's account.
+        /// Deletes a board. Only the board owner can delete it; all tasks are removed.
         /// </summary>
-        /// <param name="email">The email of the registered user.</param>
+        /// <param name="email">The email of the user. Must be logged in and be the board owner.</param>
         /// <param name="boardName">The name of the board to delete.</param>
         /// <returns>A JSON string confirming the board deletion.</returns>
-        /// <exception cref="ArgumentException">Thrown if board does not exist or user is unauthorized.</exception>
+        /// <exception cref="ArgumentException">Thrown if board does not exist.</exception>
+        /// <exception cref="InvalidOperationException">Thrown if user is not the board owner or not logged in.</exception>
         public string DeleteBoard(string email, string boardName)
         {
             try
@@ -173,6 +174,117 @@ namespace Backend.ServiceLayer
                 return JsonSerializer.Serialize(response);
             }
         }
-    
+
+        /// <summary>
+        /// Returns a list of IDs of all boards the user is a member of (owned or joined).
+        /// </summary>
+        /// <param name="email">The email of the user. Must be logged in.</param>
+        /// <returns>A JSON string with a list of integer board IDs on success, or an error message.</returns>
+        /// <exception cref="ArgumentException">Thrown if user does not exist.</exception>
+        /// <exception cref="InvalidOperationException">Thrown if user is not logged in.</exception>
+        public string GetUserBoards(string email)
+        {
+            try
+            {
+                // Y - placeholder until BoardFacade implements GetUserBoards
+                throw new NotImplementedException("GetUserBoards is not yet implemented.");
+            }
+            catch (Exception ex)
+            {
+                var response = new { ErrorMessage = ex.Message, ReturnValue = (object)null };
+                return JsonSerializer.Serialize(response);
+            }
+        }
+
+        /// <summary>
+        /// Adds the user as a member of an existing board, identified by its global ID.
+        /// Any registered user may join any board without owner permission.
+        /// </summary>
+        /// <param name="email">The email of the user. Must be logged in.</param>
+        /// <param name="boardID">The unique integer ID of the board to join.</param>
+        /// <returns>An empty JSON response on success, or an error message.</returns>
+        /// <exception cref="ArgumentException">Thrown if board ID does not exist or user is already a member.</exception>
+        /// <exception cref="InvalidOperationException">Thrown if user is not logged in.</exception>
+        public string JoinBoard(string email, int boardID)
+        {
+            try
+            {
+                // Y - placeholder until BoardFacade implements JoinBoard
+                throw new NotImplementedException("JoinBoard is not yet implemented.");
+            }
+            catch (Exception ex)
+            {
+                var response = new { ErrorMessage = ex.Message, ReturnValue = (object)null };
+                return JsonSerializer.Serialize(response);
+            }
+        }
+
+        /// <summary>
+        /// Removes the user from a board they are a member of.
+        /// The board owner cannot leave; ownership must be transferred first.
+        /// Any non-done tasks assigned to the leaving user become unassigned.
+        /// </summary>
+        /// <param name="email">The email of the user. Must be logged in and be a board member.</param>
+        /// <param name="boardID">The unique integer ID of the board to leave.</param>
+        /// <returns>An empty JSON response on success, or an error message.</returns>
+        /// <exception cref="ArgumentException">Thrown if board ID does not exist or user is not a member.</exception>
+        /// <exception cref="InvalidOperationException">Thrown if user is not logged in or is the board owner.</exception>
+        public string LeaveBoard(string email, int boardID)
+        {
+            try
+            {
+                // Y - placeholder until BoardFacade implements LeaveBoard
+                throw new NotImplementedException("LeaveBoard is not yet implemented.");
+            }
+            catch (Exception ex)
+            {
+                var response = new { ErrorMessage = ex.Message, ReturnValue = (object)null };
+                return JsonSerializer.Serialize(response);
+            }
+        }
+
+        /// <summary>
+        /// Returns the name of a board given its global unique ID.
+        /// </summary>
+        /// <param name="boardId">The unique integer ID of the board.</param>
+        /// <returns>A JSON string with the board's name on success, or an error message.</returns>
+        /// <exception cref="ArgumentException">Thrown if no board with the given ID exists.</exception>
+        public string GetBoardName(int boardId)
+        {
+            try
+            {
+                // Y - placeholder until BoardFacade implements GetBoardName
+                throw new NotImplementedException("GetBoardName is not yet implemented.");
+            }
+            catch (Exception ex)
+            {
+                var response = new { ErrorMessage = ex.Message, ReturnValue = (object)null };
+                return JsonSerializer.Serialize(response);
+            }
+        }
+
+        /// <summary>
+        /// Transfers board ownership from the current owner to another board member.
+        /// After transfer the new owner holds all ownership rights and constraints.
+        /// </summary>
+        /// <param name="ownerEmail">The email of the current owner. Must be logged in.</param>
+        /// <param name="boardName">The name of the board.</param>
+        /// <param name="newOwnerEmail">The email of the member who will become the new owner. Must be a board member.</param>
+        /// <returns>An empty JSON response on success, or an error message.</returns>
+        /// <exception cref="ArgumentException">Thrown if board does not exist or new owner is not a member.</exception>
+        /// <exception cref="InvalidOperationException">Thrown if caller is not the owner or is not logged in.</exception>
+        public string TransferBoardOwnership(string ownerEmail, string boardName, string newOwnerEmail)
+        {
+            try
+            {
+                // Y - placeholder until BoardFacade implements TransferBoardOwnership
+                throw new NotImplementedException("TransferBoardOwnership is not yet implemented.");
+            }
+            catch (Exception ex)
+            {
+                var response = new { ErrorMessage = ex.Message, ReturnValue = (object)null };
+                return JsonSerializer.Serialize(response);
+            }
+        }
     }
 }
