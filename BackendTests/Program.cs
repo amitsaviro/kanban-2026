@@ -18,6 +18,7 @@ namespace BackendTests
             UserTests userTests = new UserTests();
             BoardTests boardTests = new BoardTests();
             TaskTests taskTests = new TaskTests();
+            MembershipTests membershipTests = new MembershipTests();
 
             userTests.RunAll();
 
@@ -28,6 +29,10 @@ namespace BackendTests
             Console.WriteLine("\n-------------------\n");
 
             taskTests.RunAll();
+
+            Console.WriteLine("\n-------------------\n");
+
+            membershipTests.RunAll();
 
             Console.WriteLine("\nFinished Tests.");
         }

@@ -8,14 +8,15 @@ using System.IO;
 
 namespace IntroSE.Kanban.Backend.DataAccessLayer
 {
-    public class DataBaseManeger
+    public class DataBaseManager
     {
         private string connectionString;
-        public DataBaseManeger() 
-        { 
+        public DataBaseManager()
+        {
             string path = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "Kanban.db"));
             Console.WriteLine(path);
-            string connectionString = $"Data Source={path}; Version=3;";
+            // Y - assign to the field, not a local variable, so GetConnection() can use it
+            connectionString = $"Data Source={path}; Version=3;";
         }
         public SQLiteConnection GetConnection()
         {
@@ -23,7 +24,8 @@ namespace IntroSE.Kanban.Backend.DataAccessLayer
         }
         public void ClearDatabase()
         {
-            using(SQLiteConnection connection = GetConnection(connectionString))
+            // Y - GetConnection() takes no arguments; connectionString is already stored in the field
+            using(SQLiteConnection connection = GetConnection())
             {
                 connection.Open();
                 string clearQuary = @" 
@@ -47,8 +49,8 @@ namespace IntroSE.Kanban.Backend.DataAccessLayer
         }
         public static void Main(string[] args)
         {
-            DataBaseManeger maneger = new DataBaseManeger();
-            using(SQLiteConnection connection = maneger.GetConnection())
+            DataBaseManager manager = new DataBaseManager();
+            using(SQLiteConnection connection = manager.GetConnection())
             {
                 connection.Open();
                 Console.WriteLine("open succefuly!");

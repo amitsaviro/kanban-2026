@@ -250,10 +250,66 @@ namespace IntroSE.Kanban.Backend.ServiceLayer
         /// This method returns all in-progress tasks of a user.
         /// </summary>
         /// <param name="email">Email of the user. Must be logged in</param>
-        /// <returns>A response with a list of the in-progress tasks of the user, unless an error occurs (see <see cref="GradingService"/>)</returns>
+        /// <returns>A response with a list of the in-progress tasks assigned to the user, unless an error occurs (see <see cref="GradingService"/>)</returns>
         public string InProgressTasks(string email)
         {
             return task.InProgressTasks(email);
+        }
+
+        /// <summary>
+        /// This method returns a list of IDs of all boards the user is a member of.
+        /// </summary>
+        /// <param name="email">The email of the user. Must be logged in.</param>
+        /// <returns>A response with a list of board IDs (integers), unless an error occurs (see <see cref="GradingService"/>)</returns>
+        public string GetUserBoards(string email)
+        {
+            return board.GetUserBoards(email);
+        }
+
+        /// <summary>
+        /// This method adds a user as a member of an existing board.
+        /// </summary>
+        /// <param name="email">The email of the user. Must be logged in.</param>
+        /// <param name="boardID">The unique ID of the board to join.</param>
+        /// <returns>An empty response, unless an error occurs (see <see cref="GradingService"/>)</returns>
+        public string JoinBoard(string email, int boardID)
+        {
+            return board.JoinBoard(email, boardID);
+        }
+
+        /// <summary>
+        /// This method removes a user from an existing board. The board owner cannot leave.
+        /// </summary>
+        /// <param name="email">The email of the user. Must be logged in.</param>
+        /// <param name="boardID">The unique ID of the board to leave.</param>
+        /// <returns>An empty response, unless an error occurs (see <see cref="GradingService"/>)</returns>
+        public string LeaveBoard(string email, int boardID)
+        {
+            return board.LeaveBoard(email, boardID);
+        }
+
+        /// <summary>
+        /// This method assigns a task to a user.
+        /// </summary>
+        /// <param name="email">The email of the user performing the assignment. Must be logged in and a board member.</param>
+        /// <param name="boardName">The name of the board.</param>
+        /// <param name="columnOrdinal">The column ID. The first column is identified by 0, the ID increases by 1 for each column.</param>
+        /// <param name="taskID">The task to be updated identified task ID.</param>
+        /// <param name="emailAssignee">Email of the user to assign to the task. Must be a board member.</param>
+        /// <returns>An empty response, unless an error occurs (see <see cref="GradingService"/>)</returns>
+        public string AssignTask(string email, string boardName, int columnOrdinal, int taskID, string emailAssignee)
+        {
+            return task.AssignTask(email, boardName, columnOrdinal, taskID, emailAssignee);
+        }
+
+        /// <summary>
+        /// This method returns the name of a specific board.
+        /// </summary>
+        /// <param name="boardId">The unique ID of the board.</param>
+        /// <returns>A response with the board's name, unless an error occurs (see <see cref="GradingService"/>)</returns>
+        public string GetBoardName(int boardId)
+        {
+            return board.GetBoardName(boardId);
         }
     }
 }
