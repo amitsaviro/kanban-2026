@@ -13,6 +13,9 @@ namespace Backend.BusinessLayer
         private DateTime _dueDate;
         private string _title;
         private string _description;
+        
+        // A - Added _assignee field to store the email of the user assigned to this task (Requirement 5f).
+        private string _assignee;
 
         // Y - constants avoid magic numbers; the PDF specifically warns against them
         private const int MaxTitleLength = 50;
@@ -42,6 +45,9 @@ namespace Backend.BusinessLayer
             // Y - if description is null we store empty string so serialization gives "" instead of null
             _description = description ?? string.Empty;
             _dueDate = dueDate;
+            
+            // A - Explicitly setting assignee to null as tasks are unassigned by default (Requirement 23).
+            _assignee = null;
         }
 
         // Y - read-only properties: outside code can read these values but cannot set them directly
@@ -51,6 +57,9 @@ namespace Backend.BusinessLayer
         public string Title => _title;
         public string Description => _description;
         public DateTime DueDate => _dueDate;
+        
+        // A - Public read-only property to get the task's assignee.
+        public string Assignee => _assignee;
 
         /// <summary>
         /// Updates the task title.
@@ -88,6 +97,16 @@ namespace Backend.BusinessLayer
         {
             // Y - no validation needed here per requirements; any date is acceptable
             _dueDate = dueDate;
+        }
+
+        /// <summary>
+        /// A - Assigns the task to a specific user or unassigns it if null.
+        /// Validation of whether the user is a board member happens in the Facade.
+        /// </summary>
+        /// <param name="assigneeEmail">The email of the assigned user, or null to unassign.</param>
+        public void AssignTask(string assigneeEmail)
+        {
+            _assignee = assigneeEmail;
         }
     }
 }
