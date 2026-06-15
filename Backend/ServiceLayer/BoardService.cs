@@ -2,13 +2,14 @@ using Backend.BusinessLayer;
 using Backend.Facades;
 using System;
 using System.Collections.Generic;
-using System.Text.Json;// The official C# library for JSON serialization
-using System.Threading.Tasks;
+using System.Text.Json;
 using Task = Backend.BusinessLayer.Task;
+
 namespace Backend.ServiceLayer
 {
     /// <summary>
     /// Service layer for managing boards within the Kanban system.
+    /// Acts as the entry point for API requests, handling JSON serialization and exception translation.
     /// </summary>
     public class BoardService
     {
@@ -33,15 +34,12 @@ namespace Backend.ServiceLayer
         {
             try
             {
-                // try to create Board via facade
                 _boardFacade.CreateBoard(email, boardName);
-                // On success, return an empty response (both fields are null)
                 var response = new { ErrorMessage = (string)null, ReturnValue = (object)null };
                 return JsonSerializer.Serialize(response);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
-                // If the Facade threw an exception, catch it and return its message in the JSON
                 var response = new { ErrorMessage = ex.Message, ReturnValue = (object)null };
                 return JsonSerializer.Serialize(response);
             }
@@ -59,15 +57,12 @@ namespace Backend.ServiceLayer
         {
             try
             {
-                // try to delete Board via facade
                 _boardFacade.DeleteBoard(email, boardName);
-                // On success, return an empty response (both fields are null)
                 var response = new { ErrorMessage = (string)null, ReturnValue = (object)null };
                 return JsonSerializer.Serialize(response);
             }
             catch (Exception ex)
             {
-                // If the Facade threw an exception, catch it and return its message in the JSON
                 var response = new { ErrorMessage = ex.Message, ReturnValue = (object)null };
                 return JsonSerializer.Serialize(response);
             }
@@ -86,15 +81,12 @@ namespace Backend.ServiceLayer
         {
             try
             {
-                // try to limit Column in Board via facade
                 _boardFacade.LimitColumn(email, boardName, columnOrdinal, limit);
-                // On success, return an empty response (both fields are null)
                 var response = new { ErrorMessage = (string)null, ReturnValue = (object)null };
                 return JsonSerializer.Serialize(response);
             }
             catch (Exception ex)
             {
-                // If the Facade threw an exception, catch it and return its message in the JSON
                 var response = new { ErrorMessage = ex.Message, ReturnValue = (object)null };
                 return JsonSerializer.Serialize(response);
             }
@@ -111,15 +103,12 @@ namespace Backend.ServiceLayer
         {
             try
             {
-                // try to get the limit of the spacific column.
                 int limit = _boardFacade.GetColumnLimit(email, boardName, columnOrdinal);
-                // On success, return the column's limit
-                var response = new { ErrorMessage = (string)null, ReturnValue = limit};
+                var response = new { ErrorMessage = (string)null, ReturnValue = limit };
                 return JsonSerializer.Serialize(response);
             }
             catch (Exception ex)
             {
-                // If the Facade threw an exception, catch it and return its message in the JSON
                 var response = new { ErrorMessage = ex.Message, ReturnValue = (object)null };
                 return JsonSerializer.Serialize(response);
             }
@@ -136,15 +125,12 @@ namespace Backend.ServiceLayer
         {
             try
             {
-                // try to get the name of the spacific column
                 string name = _boardFacade.GetColumnName(email, boardName, columnOrdinal);
-                // On success, return the column's name
                 var response = new { ErrorMessage = (string)null, ReturnValue = name };
                 return JsonSerializer.Serialize(response);
             }
             catch (Exception ex)
             {
-                // If the Facade threw an exception, catch it and return its message in the JSON
                 var response = new { ErrorMessage = ex.Message, ReturnValue = (object)null };
                 return JsonSerializer.Serialize(response);
             }
@@ -161,15 +147,12 @@ namespace Backend.ServiceLayer
         {
             try
             {
-                // try to get the lisit of tasks of the column
                 List<Task> tasks = _boardFacade.GetColumn(email, boardName, columnOrdinal);
-                // On success, return the column's list of tasks
                 var response = new { ErrorMessage = (string)null, ReturnValue = tasks };
                 return JsonSerializer.Serialize(response);
             }
             catch (Exception ex)
             {
-                // If the Facade threw an exception, catch it and return its message in the JSON
                 var response = new { ErrorMessage = ex.Message, ReturnValue = (object)null };
                 return JsonSerializer.Serialize(response);
             }
@@ -180,14 +163,14 @@ namespace Backend.ServiceLayer
         /// </summary>
         /// <param name="email">The email of the user. Must be logged in.</param>
         /// <returns>A JSON string with a list of integer board IDs on success, or an error message.</returns>
-        /// <exception cref="ArgumentException">Thrown if user does not exist.</exception>
-        /// <exception cref="InvalidOperationException">Thrown if user is not logged in.</exception>
         public string GetUserBoards(string email)
         {
             try
             {
-                // Y - placeholder until BoardFacade implements GetUserBoards
-                throw new NotImplementedException("GetUserBoards is not yet implemented.");
+                // A - Delegate to BoardFacade to collect IDs of all boards the user belongs to (Requirement: GetUserBoards)
+                List<int> ids = _boardFacade.GetUserBoards(email);
+                var response = new { ErrorMessage = (string)null, ReturnValue = ids };
+                return JsonSerializer.Serialize(response);
             }
             catch (Exception ex)
             {
@@ -198,19 +181,17 @@ namespace Backend.ServiceLayer
 
         /// <summary>
         /// Adds the user as a member of an existing board, identified by its global ID.
-        /// Any registered user may join any board without owner permission.
         /// </summary>
         /// <param name="email">The email of the user. Must be logged in.</param>
         /// <param name="boardID">The unique integer ID of the board to join.</param>
         /// <returns>An empty JSON response on success, or an error message.</returns>
-        /// <exception cref="ArgumentException">Thrown if board ID does not exist or user is already a member.</exception>
-        /// <exception cref="InvalidOperationException">Thrown if user is not logged in.</exception>
         public string JoinBoard(string email, int boardID)
         {
             try
             {
-                // Y - placeholder until BoardFacade implements JoinBoard
-                throw new NotImplementedException("JoinBoard is not yet implemented.");
+                _boardFacade.JoinBoard(email, boardID);
+                var response = new { ErrorMessage = (string)null, ReturnValue = (object)null };
+                return JsonSerializer.Serialize(response);
             }
             catch (Exception ex)
             {
@@ -221,20 +202,17 @@ namespace Backend.ServiceLayer
 
         /// <summary>
         /// Removes the user from a board they are a member of.
-        /// The board owner cannot leave; ownership must be transferred first.
-        /// Any non-done tasks assigned to the leaving user become unassigned.
         /// </summary>
         /// <param name="email">The email of the user. Must be logged in and be a board member.</param>
         /// <param name="boardID">The unique integer ID of the board to leave.</param>
         /// <returns>An empty JSON response on success, or an error message.</returns>
-        /// <exception cref="ArgumentException">Thrown if board ID does not exist or user is not a member.</exception>
-        /// <exception cref="InvalidOperationException">Thrown if user is not logged in or is the board owner.</exception>
         public string LeaveBoard(string email, int boardID)
         {
             try
             {
-                // Y - placeholder until BoardFacade implements LeaveBoard
-                throw new NotImplementedException("LeaveBoard is not yet implemented.");
+                _boardFacade.LeaveBoard(email, boardID);
+                var response = new { ErrorMessage = (string)null, ReturnValue = (object)null };
+                return JsonSerializer.Serialize(response);
             }
             catch (Exception ex)
             {
@@ -248,13 +226,13 @@ namespace Backend.ServiceLayer
         /// </summary>
         /// <param name="boardId">The unique integer ID of the board.</param>
         /// <returns>A JSON string with the board's name on success, or an error message.</returns>
-        /// <exception cref="ArgumentException">Thrown if no board with the given ID exists.</exception>
         public string GetBoardName(int boardId)
         {
             try
             {
-                // Y - placeholder until BoardFacade implements GetBoardName
-                throw new NotImplementedException("GetBoardName is not yet implemented.");
+                string name = _boardFacade.GetBoardName(boardId);
+                var response = new { ErrorMessage = (string)null, ReturnValue = name };
+                return JsonSerializer.Serialize(response);
             }
             catch (Exception ex)
             {
@@ -265,20 +243,18 @@ namespace Backend.ServiceLayer
 
         /// <summary>
         /// Transfers board ownership from the current owner to another board member.
-        /// After transfer the new owner holds all ownership rights and constraints.
         /// </summary>
-        /// <param name="ownerEmail">The email of the current owner. Must be logged in.</param>
+        /// <param name="ownerEmail">The email of the current owner.</param>
         /// <param name="boardName">The name of the board.</param>
-        /// <param name="newOwnerEmail">The email of the member who will become the new owner. Must be a board member.</param>
+        /// <param name="newOwnerEmail">The email of the member who will become the new owner.</param>
         /// <returns>An empty JSON response on success, or an error message.</returns>
-        /// <exception cref="ArgumentException">Thrown if board does not exist or new owner is not a member.</exception>
-        /// <exception cref="InvalidOperationException">Thrown if caller is not the owner or is not logged in.</exception>
         public string TransferBoardOwnership(string ownerEmail, string boardName, string newOwnerEmail)
         {
             try
             {
-                // Y - placeholder until BoardFacade implements TransferBoardOwnership
-                throw new NotImplementedException("TransferBoardOwnership is not yet implemented.");
+                _boardFacade.TransferOwnership(ownerEmail, newOwnerEmail, boardName);
+                var response = new { ErrorMessage = (string)null, ReturnValue = (object)null };
+                return JsonSerializer.Serialize(response);
             }
             catch (Exception ex)
             {

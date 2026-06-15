@@ -167,16 +167,42 @@ namespace BackendTests
             // Y - MEMBER leaves the board; task should become unassigned
             boardService.LeaveBoard(MEMBER, boardId);
 
-            // Y - get the backlog column and check the task's assignee
+            // A - get the backlog column and verify task 0's assignee is now null
             Response colRes = ParseResponse(boardService.GetColumn(OWNER, BOARD_NAME, 0));
 
-            // Y - MEMBER rejoins so later tests still work
+            // A - MEMBER rejoins so later tests still work
             boardService.JoinBoard(MEMBER, boardId);
 
-            if (colRes.ErrorMessage == null)
-                Console.WriteLine("-> PASSED (partial): Board column is readable after member left. Manual check needed for assignee == null.");
-            else
+            if (colRes.ErrorMessage != null)
+            {
                 Console.WriteLine($"-> FAILED: Could not read column after member left. Error: {colRes.ErrorMessage}");
+                return;
+            }
+
+            // A - parse the task list and find task ID 0; its Assignee must be null
+            bool taskUnassigned = false;
+            if (colRes.ReturnValue != null)
+            {
+                var tasks = JsonSerializer.Deserialize<JsonElement[]>(colRes.ReturnValue.ToString()!);
+                if (tasks != null)
+                {
+                    foreach (var t in tasks)
+                    {
+                        if (t.TryGetProperty("Id", out var idProp) && idProp.GetInt32() == 0)
+                        {
+                            // A - Assignee should be null after member left (Requirement 15)
+                            if (!t.TryGetProperty("Assignee", out var assigneeProp) ||
+                                assigneeProp.ValueKind == JsonValueKind.Null)
+                                taskUnassigned = true;
+                        }
+                    }
+                }
+            }
+
+            if (taskUnassigned)
+                Console.WriteLine("-> PASSED: Task assignee was correctly cleared to null after member left.");
+            else
+                Console.WriteLine("-> FAILED: Task assignee was NOT cleared after member left the board.");
         }
 
         // ─── Requirement 18 ────────────────────────────────────────────────────────
@@ -281,10 +307,25 @@ namespace BackendTests
             // Y - MEMBER calls InProgressTasks — should include the task assigned to them
             Response memberRes = ParseResponse(taskService.InProgressTasks(MEMBER));
 
-            if (ownerRes.ErrorMessage == null && memberRes.ErrorMessage == null)
-                Console.WriteLine("-> PASSED (partial): InProgressTasks returned without error. Content filtering check requires inspection.");
-            else
+            if (ownerRes.ErrorMessage != null || memberRes.ErrorMessage != null)
+            {
                 Console.WriteLine($"-> FAILED: Owner error: {ownerRes.ErrorMessage}, Member error: {memberRes.ErrorMessage}");
+                return;
+            }
+
+            // A - verify OWNER's list is empty and MEMBER's list contains at least the task
+            var ownerTasks = ownerRes.ReturnValue != null
+                ? JsonSerializer.Deserialize<JsonElement[]>(ownerRes.ReturnValue.ToString()!) : null;
+            var memberTasks = memberRes.ReturnValue != null
+                ? JsonSerializer.Deserialize<JsonElement[]>(memberRes.ReturnValue.ToString()!) : null;
+
+            bool ownerEmpty = ownerTasks == null || ownerTasks.Length == 0;
+            bool memberHasTask = memberTasks != null && memberTasks.Length > 0;
+
+            if (ownerEmpty && memberHasTask)
+                Console.WriteLine("-> PASSED: InProgressTasks correctly filtered by assignee.");
+            else
+                Console.WriteLine($"-> FAILED: Owner task count={ownerTasks?.Length ?? 0} (expected 0), Member task count={memberTasks?.Length ?? 0} (expected >0).");
         }
 
         // ─── Requirement 23 ────────────────────────────────────────────────────────
@@ -315,6 +356,74 @@ namespace BackendTests
                 Console.WriteLine("-> PASSED: Task assignment permission rules enforced correctly.");
             else
                 Console.WriteLine($"-> FAILED: First assign: {firstAssign.ErrorMessage}, Outsider reassign: {outsiderReassign.ErrorMessage}, Assignee reassign: {assigneeReassign.ErrorMessage}");
+        }
+
+        // ─── GetBoardName ──────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// A - Tests that GetBoardName returns the correct name for a given board ID.
+        /// </summary>
+        public void TestGetBoardName()
+        {
+            Console.WriteLine("Running TestGetBoardName...");
+
+            Response res = ParseResponse(boardService.GetBoardName(boardId));
+
+            if (res.ErrorMessage == null && res.ReturnValue != null &&
+                res.ReturnValue.ToString()!.Contains(BOARD_NAME, StringComparison.OrdinalIgnoreCase))
+                Console.WriteLine("-> PASSED: GetBoardName returned the correct board name.");
+            else
+                Console.WriteLine($"-> FAILED: Error: {res.ErrorMessage}, Value: {res.ReturnValue}");
+        }
+
+        // ─── GetUserBoards ─────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// A - Tests that GetUserBoards returns a list containing the board the user is a member of.
+        /// </summary>
+        public void TestGetUserBoards()
+        {
+            Console.WriteLine("Running TestGetUserBoards...");
+
+            Response res = ParseResponse(boardService.GetUserBoards(MEMBER));
+
+            if (res.ErrorMessage != null)
+            {
+                Console.WriteLine($"-> FAILED: GetUserBoards returned error: {res.ErrorMessage}");
+                return;
+            }
+
+            // A - verify the known boardId appears in MEMBER's board list
+            var ids = res.ReturnValue != null
+                ? JsonSerializer.Deserialize<int[]>(res.ReturnValue.ToString()!) : null;
+            bool containsBoard = ids != null && Array.Exists(ids, id => id == boardId);
+
+            if (containsBoard)
+                Console.WriteLine("-> PASSED: GetUserBoards correctly returned the user's board ID.");
+            else
+                Console.WriteLine($"-> FAILED: Expected board ID {boardId} not found in list.");
+        }
+
+        // ─── LeaveBoard success ────────────────────────────────────────────────────
+
+        /// <summary>
+        /// A - Tests that a regular member (non-owner) can successfully leave a board.
+        /// Covers Requirement 14 (positive case).
+        /// </summary>
+        public void TestLeaveBoardSuccess()
+        {
+            Console.WriteLine("Running TestLeaveBoardSuccess (Requirement 14, success case)...");
+
+            // A - OUTSIDER is a member; they leave the board
+            Response leaveRes = ParseResponse(boardService.LeaveBoard(OUTSIDER, boardId));
+
+            // A - OUTSIDER rejoins so they don't affect later test state
+            boardService.JoinBoard(OUTSIDER, boardId);
+
+            if (leaveRes.ErrorMessage == null)
+                Console.WriteLine("-> PASSED: Regular member successfully left the board.");
+            else
+                Console.WriteLine($"-> FAILED: LeaveBoard returned error: {leaveRes.ErrorMessage}");
         }
 
         // ─── Setup & RunAll ────────────────────────────────────────────────────────
@@ -349,6 +458,19 @@ namespace BackendTests
             boardService.JoinBoard(OUTSIDER, boardId);
 
             TestOnlyOwnerCanDelete();
+
+            // A - TestOnlyOwnerCanDelete deleted and recreated the board, so boardId is now stale.
+            // Refresh it and re-add MEMBER and OUTSIDER to the new board before continuing.
+            string freshBoardsJson = boardService.GetUserBoards(OWNER);
+            Response freshBoardsRes = ParseResponse(freshBoardsJson);
+            if (freshBoardsRes.ErrorMessage == null && freshBoardsRes.ReturnValue != null)
+            {
+                var freshIds = JsonSerializer.Deserialize<int[]>(freshBoardsRes.ReturnValue.ToString()!);
+                boardId = freshIds != null && freshIds.Length > 0 ? freshIds[0] : -1;
+            }
+            // A - re-join MEMBER only; TestJoinBoard will handle re-joining OUTSIDER
+            boardService.JoinBoard(MEMBER, boardId);
+
             TestJoinBoard();
             TestJoinNonExistentBoard();
             TestTransferOwnership();
@@ -360,6 +482,9 @@ namespace BackendTests
             TestOnlyAssigneeOrOwnerCanEdit();
             TestInProgressTasksFiltersByAssignee();
             TestAssignTaskRules();
+            TestGetBoardName();
+            TestGetUserBoards();
+            TestLeaveBoardSuccess();
 
             Console.WriteLine("=== FINISHED MEMBERSHIP ACCEPTANCE TESTS ===\n");
         }

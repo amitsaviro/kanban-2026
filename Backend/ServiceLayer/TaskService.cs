@@ -171,7 +171,7 @@ namespace Backend.ServiceLayer
                 return JsonSerializer.Serialize(response);
             }
         }
-        ///////////////////////////// yuval - new name here ///////////////////////
+        
         /// <summary>
         /// Retrieves all 'in progress' tasks that are assigned to the user, across all boards they are a member of.
         /// </summary>
@@ -195,30 +195,32 @@ namespace Backend.ServiceLayer
                 return JsonSerializer.Serialize(response);
             }
         }
-        //////////////////////////////////////////////////////////////////////////
-
+        /////////////////////////////////////////////////////////////////////////
+        /// 
         /// <summary>
         /// Assigns a task to a board member.
         /// An unassigned task may be assigned by any board member to any board member.
         /// An already-assigned task may only be reassigned by the current assignee or the board owner.
         /// </summary>
-        /// <param name="email">The email of the user performing the assignment. Must be logged in and a board member.</param>
+        /// <param name="email">The email of the user performing the assignment.</param>
         /// <param name="boardName">The name of the board.</param>
-        /// <param name="columnOrdinal">The column index of the task (0 = backlog, 1 = in progress, 2 = done).</param>
+        /// <param name="columnOrdinal">The column index (0, 1, or 2).</param>
         /// <param name="taskID">The ID of the task to assign.</param>
-        /// <param name="emailAssignee">The email of the user to assign. Must be a board member, or null/empty to unassign.</param>
-        /// <returns>An empty JSON response on success, or an error message.</returns>
-        /// <exception cref="ArgumentException">Thrown if task or assignee does not exist, or assignee is not a member.</exception>
-        /// <exception cref="InvalidOperationException">Thrown if caller lacks permission to reassign or task is done.</exception>
+        /// <param name="emailAssignee">The email of the user to assign, or null/empty to unassign.</param>
+        /// <returns>A JSON string confirmation.</returns>
         public string AssignTask(string email, string boardName, int columnOrdinal, int taskID, string emailAssignee)
         {
             try
             {
-                // Y - placeholder until TaskFacade implements AssignTask
-                throw new NotImplementedException("AssignTask is not yet implemented.");
+                _taskFacade.AssignTask(email, boardName, columnOrdinal, taskID, emailAssignee);
+                
+                // On success, return an empty response
+                var response = new { ErrorMessage = (string)null, ReturnValue = (object)null };
+                return JsonSerializer.Serialize(response);
             }
             catch (Exception ex)
             {
+                // If the Facade threw an exception, catch it and return its message in the JSON
                 var response = new { ErrorMessage = ex.Message, ReturnValue = (object)null };
                 return JsonSerializer.Serialize(response);
             }

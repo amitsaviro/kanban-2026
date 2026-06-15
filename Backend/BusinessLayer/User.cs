@@ -12,8 +12,9 @@ namespace Backend.BusinessLayer
         private string _email;
         private string _password;
         private bool _isLoggedIn;
+        
+        // A - Dictionary mapping the user's local board name (lowercase) to the shared Board object.
         private Dictionary<string, Board> _boards;
-
 
         /// <summary>
         /// Initializes a new instance of the User class - ctor
@@ -33,7 +34,6 @@ namespace Backend.BusinessLayer
             // New users have no boards by default. Dictionary prevents duplicate board names.
             _boards = new Dictionary<string, Board>();
         }
-
 
         /// <summary>
         /// Gets the unique email address of the user.
@@ -56,7 +56,6 @@ namespace Backend.BusinessLayer
                 return _isLoggedIn;
             }
         }
-
 
         /// <summary>
         /// Authenticates the user with the provided password.
@@ -92,23 +91,23 @@ namespace Backend.BusinessLayer
         }
 
         /// <summary>
-        /// Adds a new board to the user's collection.
+        /// A - Adds a reference to a shared board. Used when creating a new board or joining an existing one.
         /// </summary>
-        /// <param name="boardName">The unique name of the board to add.</param>
+        /// <param name="board">The shared Board object.</param>
         /// <exception cref="ArgumentException">Thrown if board name is empty or already exists.</exception>
-        public void AddBoard(string boardName)
+        public void AddBoard(Board board)
         {
-            if (string.IsNullOrWhiteSpace(boardName))
-                throw new ArgumentException("Board name cannot be empty.");
+            if (board == null)
+                throw new ArgumentNullException(nameof(board));
 
             // Y - ToLower() makes the key case-insensitive so "Work" and "work" are treated as the same board (Requirement 10)
-            string key = boardName.Trim().ToLower();
+            string key = board.Name.Trim().ToLower();
 
             if (_boards.ContainsKey(key))
-                throw new ArgumentException($"A board named '{boardName}' already exists.");
+                throw new ArgumentException($"A board named '{board.Name}' already exists.");
 
-            // Y - create a new Board object and store it in the dictionary under the lowercase key
-            _boards.Add(key, new Board(boardName));
+            // A - Store a reference to the shared board object instead of creating a new one
+            _boards.Add(key, board);
         }
 
         /// <summary>
@@ -155,7 +154,6 @@ namespace Backend.BusinessLayer
             // Y - IEnumerable<Board> is an interface meaning "something you can loop over"
             // returning _boards.Values gives the caller all boards without exposing the internal dictionary
             return _boards.Values;
-
         }
     }
 }
