@@ -1,5 +1,6 @@
 using System;
 using System.Text.Json;
+using Backend.Facades;
 using Backend.ServiceLayer;
 
 namespace BackendTests
@@ -19,9 +20,17 @@ namespace BackendTests
     /// </summary>
     public class BoardTests
     {
-        private UserService userService = new UserService();
-        private BoardService boardService = new BoardService();
+        private UserService userService;
+        private BoardService boardService;
         private const string EMAIL = "yuval@test.com";
+
+        // Y - shared UserFacade so userService and boardService operate on the same user store
+        public BoardTests()
+        {
+            UserFacade uf = new UserFacade();
+            userService = new UserService(uf);
+            boardService = new BoardService(new BoardFacade(uf));
+        }
         private const string PASSWORD = "Password1";
 
         /// <summary>

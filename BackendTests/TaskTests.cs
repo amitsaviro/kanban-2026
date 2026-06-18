@@ -1,5 +1,6 @@
 using System;
 using System.Text.Json;
+using Backend.Facades;
 using Backend.ServiceLayer;
 
 namespace BackendTests
@@ -10,9 +11,18 @@ namespace BackendTests
     /// </summary>
     public class TaskTests
     {
-        private UserService userService = new UserService();
-        private BoardService boardService = new BoardService();
-        private TaskService taskService = new TaskService();
+        private UserService userService;
+        private BoardService boardService;
+        private TaskService taskService;
+
+        // Y - shared UserFacade so all three services operate on the same user/board state
+        public TaskTests()
+        {
+            UserFacade uf = new UserFacade();
+            userService = new UserService(uf);
+            boardService = new BoardService(new BoardFacade(uf));
+            taskService = new TaskService(new TaskFacade(uf));
+        }
 
         // Unique user and board for task testing to prevent state collisions
         private const string EMAIL = "task_master@test.com";

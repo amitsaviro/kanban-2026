@@ -8,7 +8,11 @@ namespace Backend.Facades
 {
     public class UserFacade
     {
-        private static Dictionary<string, User> users = new Dictionary<string, User>();
+        // Y - instance field so each GradingService / test suite gets its own isolated user store
+        private Dictionary<string, User> _users = new Dictionary<string, User>();
+        // Y - named constants replace magic numbers for password length (Requirement 2)
+        private const int MinPasswordLength = 6;
+        private const int MaxPasswordLength = 20;
         // The only static field allowed in the project, used strictly for logging purposes.
         private static readonly ILog log = LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
@@ -48,7 +52,7 @@ namespace Backend.Facades
             // Normalize email to ensure case-insensitivity
             string cleanedEmail = email.Trim().ToLower();
 
-            if (users.ContainsKey(cleanedEmail))
+            if (_users.ContainsKey(cleanedEmail))
             {
                 log.Error($"Registration failed: Email '{email}' is already registered.");
                 throw new ArgumentException($"The email '{email}' is already registered.");
@@ -71,7 +75,7 @@ namespace Backend.Facades
             }
 
             User newUser = new User(cleanedEmail, password);
-            users.Add(cleanedEmail, newUser);
+            _users.Add(cleanedEmail, newUser);
 
             // Y - Requirement 6: user is automatically logged in right after registering, so they don't need to call Login again
             newUser.Login(password);
@@ -106,13 +110,13 @@ namespace Backend.Facades
 
             string cleanedEmail = email.Trim().ToLower();
 
-            if (!users.ContainsKey(cleanedEmail))//checking if this user exist
+            if (!_users.ContainsKey(cleanedEmail))//checking if this user exist
             {
                 log.Error($"Login failed: The email '{email}' is not registered.");
                 throw new ArgumentException("No user found with the provided email address.");
             }
 
-            User userToLogin = users[cleanedEmail];//take this user by email
+            User userToLogin = _users[cleanedEmail];//take this user by email
 
             try
             {
@@ -138,7 +142,7 @@ namespace Backend.Facades
             // Y - normalize email the same way Register does, so lookup is always consistent
             string cleanedEmail = email.Trim().ToLower();
 
-            if (!users.TryGetValue(cleanedEmail, out User user))
+            if (!_users.TryGetValue(cleanedEmail, out User user))
                 throw new ArgumentException("No user found with the provided email address.");
 
             return user;
@@ -182,13 +186,13 @@ namespace Backend.Facades
 
             string cleanedEmail = email.Trim().ToLower();
 
-            if (!users.ContainsKey(cleanedEmail))
+            if (!_users.ContainsKey(cleanedEmail))
             {
                 log.Error($"Logout failed: The email '{email}' is not registered.");
                 throw new ArgumentException("No user found with the provided email address.");
             }
 
-            User userToLogout = users[cleanedEmail];
+            User userToLogout = _users[cleanedEmail];
 
             try
             {
@@ -209,7 +213,7 @@ namespace Backend.Facades
         /// </summary>
         private void ValidatePasswordComplexity(string password)
         {
-            if (password.Length < 6 || password.Length > 20)
+            if (password.Length < MinPasswordLength || password.Length > MaxPasswordLength)
             {
                 throw new ArgumentException("Password length must be between 6 and 20 characters.");
             }
@@ -252,7 +256,7 @@ namespace Backend.Facades
 
         public bool isLoggedIn(string email)
         {
-            if (users.ContainsKey(email)) { return users[email].IsLoggedIn; }
+            if (_users.ContainsKey(email)) { return _users[email].IsLoggedIn; }
             return false;
         }
     }

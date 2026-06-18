@@ -17,6 +17,12 @@ namespace Backend.ServiceLayer
             _userFacade = new UserFacade();
         }
 
+        // Y - injection constructor: allows GradingService and test classes to pass a shared UserFacade
+        public UserService(UserFacade userFacade)
+        {
+            _userFacade = userFacade;
+        }
+
         /// <summary> Registers a new user to the system. </summary>
         /// <param name="email">Unique email address.</param>
         /// <param name="password">Must be 6-20 chars, with 1 uppercase, 1 lowercase, 1 number.</param>

@@ -36,8 +36,8 @@ namespace Backend.BusinessLayer
         public string Name => _name;
         public ColumnType Type => _type;
         public int Limit => _limit;
-        // returns the internal list directly so callers can iterate tasks; we trust our own layer not to misuse it
-        public List<Task> Tasks => _tasks;
+        // Y - returns a copy so external callers cannot mutate the internal list directly
+        public List<Task> Tasks => new List<Task>(_tasks);
 
         /// <summary>
         /// Adds a task to this column if the limit permits.
@@ -113,7 +113,7 @@ namespace Backend.BusinessLayer
 
             _limit = limit;
         }
-        public List<Task> GetTasks() { return _tasks; }
+        public List<Task> GetTasks() { return new List<Task>(_tasks); }
     }
 
 }
