@@ -14,11 +14,17 @@ namespace Backend.ServiceLayer
     {
         private TaskFacade _taskFacade;
         /// <summary>
-        /// Initializes a new instance of the BoardService class and its underlying Facade.
+        /// Initializes a new instance of the TaskService class and its underlying Facade.
         /// </summary>
         public TaskService()
         {
             _taskFacade = new TaskFacade();
+        }
+
+        // Y - injection constructor: allows GradingService to pass a TaskFacade that shares a UserFacade
+        public TaskService(TaskFacade taskFacade)
+        {
+            _taskFacade = taskFacade;
         }
         /// <summary>
         /// Adds a new task to the 'backlog' column of a specific board.

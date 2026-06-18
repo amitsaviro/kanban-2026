@@ -23,6 +23,12 @@ namespace Backend.ServiceLayer
             _boardFacade = new BoardFacade();
         }
 
+        // Y - injection constructor: allows GradingService to pass a BoardFacade that shares a UserFacade
+        public BoardService(BoardFacade boardFacade)
+        {
+            _boardFacade = boardFacade;
+        }
+
         /// <summary>
         /// Creates a new board for a specific user.
         /// </summary>

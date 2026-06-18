@@ -54,7 +54,8 @@ namespace Backend.BusinessLayer
         // A - Expose ID, Owner, and Members as read-only properties.
         public int Id => _id;
         public string OwnerEmail => _ownerEmail;
-        public List<string> Members => _members;
+        // Y - returns a copy so callers cannot bypass AddMember/RemoveMember by mutating the list directly
+        public List<string> Members => new List<string>(_members);
 
         /// <summary>
         /// A - Adds a new member to the board.
@@ -122,7 +123,7 @@ namespace Backend.BusinessLayer
         public Task AddTask(string title, string description, DateTime dueDate)
         {
             Task task = new Task(_nextTaskId, title, description, dueDate);
-            _columns[(int)ColumnType.Backlog].Tasks.Add(task); // Delegating to Column
+            _columns[(int)ColumnType.Backlog].AddTask(task);
             _nextTaskId++;
             return task;
         }
