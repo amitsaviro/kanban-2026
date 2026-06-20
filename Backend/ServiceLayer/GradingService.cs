@@ -2,6 +2,8 @@ using System;
 using System.Text.Json;
 using Backend.Facades;
 using Backend.ServiceLayer;
+using IntroSE.Kanban.Backend.DataAccessLayer;
+using IntroSE.Kanban.Backend.DataAccessLayer.DTOs;
 
 
 namespace IntroSE.Kanban.Backend.ServiceLayer
@@ -57,11 +59,30 @@ namespace IntroSE.Kanban.Backend.ServiceLayer
         private BoardService _boardService;
         private TaskService _taskService;
 
+        // Y - controllers are created once and reused across LoadData/DeleteData cycles
+        private DataBaseManager _dbManager;
+        private UserController _userCtrl;
+        private BoardController _boardCtrl;
+        private ColumnController _columnCtrl;
+        private TaskController _taskCtrl;
+        private UserBoardsController _membersCtrl;
+
         public GradingService()
         {
-            UserFacade userFacade = new UserFacade();
-            BoardFacade boardFacade = new BoardFacade(userFacade);
-            TaskFacade taskFacade = new TaskFacade(userFacade);
+            _dbManager = new DataBaseManager();
+            _dbManager.CreateSchema();
+
+            _userCtrl = new UserController(_dbManager);
+            _boardCtrl = new BoardController(_dbManager);
+            _columnCtrl = new ColumnController(_dbManager);
+            _taskCtrl = new TaskController(_dbManager);
+            _membersCtrl = new UserBoardsController(_dbManager);
+
+            // Y - wire facades with controllers so every write is immediately persisted to DB
+            UserFacade userFacade = new UserFacade(_userCtrl);
+            BoardFacade boardFacade = new BoardFacade(userFacade, _boardCtrl, _columnCtrl, _membersCtrl, _taskCtrl);
+            TaskFacade taskFacade = new TaskFacade(userFacade, _taskCtrl, _boardCtrl);
+
             _userService = new UserService(userFacade);
             _boardService = new BoardService(boardFacade);
             _taskService = new TaskService(taskFacade);
@@ -343,9 +364,34 @@ namespace IntroSE.Kanban.Backend.ServiceLayer
         /// <returns>An empty response, unless an error occurs (see <see cref="GradingService"/>)</returns>
         public string LoadData()
         {
-            // Y - no persistence layer yet; returns success so the grader can call this safely before M3
             try
             {
+                // Y - create fresh empty facades then populate them from DB so in-memory state mirrors what was persisted
+                UserFacade userFacade = new UserFacade(_userCtrl);
+                BoardFacade boardFacade = new BoardFacade(userFacade, _boardCtrl, _columnCtrl, _membersCtrl, _taskCtrl);
+                TaskFacade taskFacade = new TaskFacade(userFacade, _taskCtrl, _boardCtrl);
+
+                // Y - load order matters: users first, then boards, then limits, then members, then tasks
+                foreach (UserDTO dto in _userCtrl.LoadAll())
+                    userFacade.LoadUser(dto.Email, dto.Password);
+
+                foreach (BoardDTO dto in _boardCtrl.LoadAll())
+                    boardFacade.LoadBoard(dto);
+
+                // Y - limits must be set before tasks are loaded so Column.AddTask respects the right limit
+                foreach (ColumnDTO dto in _columnCtrl.LoadAll())
+                    boardFacade.LoadColumnLimit(dto.BoardId, dto.Ordinal, dto.Limit);
+
+                foreach (UserBoardsDTO dto in _membersCtrl.LoadAll())
+                    boardFacade.LoadMember(dto.BoardId, dto.UserEmail);
+
+                foreach (TaskDTO dto in _taskCtrl.LoadAll())
+                    boardFacade.LoadTask(dto);
+
+                _userService = new UserService(userFacade);
+                _boardService = new BoardService(boardFacade);
+                _taskService = new TaskService(taskFacade);
+
                 var response = new { ErrorMessage = (string)null, ReturnValue = (object)null };
                 return JsonSerializer.Serialize(response);
             }
@@ -365,15 +411,19 @@ namespace IntroSE.Kanban.Backend.ServiceLayer
         ///<returns>An empty response, unless an error occurs (see <see cref="GradingService"/>)</returns>
         public string DeleteData()
         {
-            // Y - reset all in-memory state by recreating a fresh shared facade chain
             try
             {
-                UserFacade userFacade = new UserFacade();
-                BoardFacade boardFacade = new BoardFacade(userFacade);
-                TaskFacade taskFacade = new TaskFacade(userFacade);
+                // Y - clear all DB rows (schema stays intact) then rebuild fresh empty facades
+                _dbManager.ClearDatabase();
+
+                UserFacade userFacade = new UserFacade(_userCtrl);
+                BoardFacade boardFacade = new BoardFacade(userFacade, _boardCtrl, _columnCtrl, _membersCtrl, _taskCtrl);
+                TaskFacade taskFacade = new TaskFacade(userFacade, _taskCtrl, _boardCtrl);
+
                 _userService = new UserService(userFacade);
                 _boardService = new BoardService(boardFacade);
                 _taskService = new TaskService(taskFacade);
+
                 var response = new { ErrorMessage = (string)null, ReturnValue = (object)null };
                 return JsonSerializer.Serialize(response);
             }

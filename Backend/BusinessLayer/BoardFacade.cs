@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using Backend.BusinessLayer;
+using IntroSE.Kanban.Backend.DataAccessLayer;
+using IntroSE.Kanban.Backend.DataAccessLayer.DTOs;
 using log4net;
 
 namespace Backend.Facades
@@ -16,9 +18,15 @@ namespace Backend.Facades
 
         // A - System-wide collection of all boards, mapped by their unique ID (Requirement 4).
         private Dictionary<int, Board> _allBoards;
-        
+
         // A - Counter to assign unique IDs to new boards.
         private int _nextBoardId;
+
+        // Y - null when no persistence needed (tests); injected by GradingService for production use
+        private BoardController _boardCtrl;
+        private ColumnController _columnCtrl;
+        private UserBoardsController _membersCtrl;
+        private TaskController _taskCtrl;
 
         // Y - logger for tracking important events and errors (the one allowed static field)
         private static readonly ILog log = LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
@@ -44,6 +52,19 @@ namespace Backend.Facades
             _nextBoardId = 0;
         }
 
+        // Y - full injection constructor used by GradingService to wire in all DAL controllers
+        public BoardFacade(UserFacade userFacade, BoardController boardCtrl, ColumnController columnCtrl,
+                           UserBoardsController membersCtrl, TaskController taskCtrl)
+        {
+            _userFacade = userFacade;
+            _allBoards = new Dictionary<int, Board>();
+            _nextBoardId = 0;
+            _boardCtrl = boardCtrl;
+            _columnCtrl = columnCtrl;
+            _membersCtrl = membersCtrl;
+            _taskCtrl = taskCtrl;
+        }
+
 
         /// <summary>
         /// Creates a new board and assigns the creator as the owner.
@@ -63,12 +84,21 @@ namespace Backend.Facades
             
             // A - Link the board to the user's collection. Validation for duplicate names happens inside User.AddBoard.
             user.AddBoard(newBoard);
-            
+
             // A - Add to the global system registry and increment ID.
             _allBoards.Add(_nextBoardId, newBoard);
             _nextBoardId++;
-            
-            log.Info($"User '{email}' created a new board named '{name}' with ID {_nextBoardId - 1}.");
+
+            if (_boardCtrl != null)
+            {
+                // Y - persist the board row, its 3 column rows, and the creator's membership row
+                _boardCtrl.Insert(new BoardDTO(newBoard.Id, newBoard.Name, newBoard.OwnerEmail, newBoard.NextTaskId));
+                for (int ordinal = 0; ordinal <= 2; ordinal++)
+                    _columnCtrl.Insert(new ColumnDTO(newBoard.Id, ordinal, -1));
+                _membersCtrl.Insert(new UserBoardsDTO(newBoard.Id, email.Trim().ToLower()));
+            }
+
+            log.Info($"User '{email}' created a new board named '{name}' with ID {newBoard.Id}.");
         }
 
         /// <summary>
@@ -99,10 +129,20 @@ namespace Backend.Facades
                 catch { }  // A - skip if member lookup fails (e.g. user deleted)
             }
 
+            int boardId = board.Id;
             // A - Remove from the global registry
-            _allBoards.Remove(board.Id);
+            _allBoards.Remove(boardId);
 
-            log.Info($"Board '{name}' (ID: {board.Id}) was deleted by owner '{email}'.");
+            if (_boardCtrl != null)
+            {
+                // Y - delete tasks and members before the board row (child tables first)
+                _taskCtrl.DeleteByBoard(boardId);
+                _membersCtrl.DeleteByBoard(boardId);
+                _columnCtrl.DeleteByBoard(boardId);
+                _boardCtrl.Delete(boardId);
+            }
+
+            log.Info($"Board '{name}' (ID: {boardId}) was deleted by owner '{email}'.");
         }
 
         /// <summary>
@@ -148,6 +188,41 @@ namespace Backend.Facades
         }
 
 
+        // Y - called by GradingService.LoadData to restore one board row from DB without triggering persistence
+        public void LoadBoard(BoardDTO dto)
+        {
+            Board board = new Board(dto.Id, dto.Name, dto.OwnerEmail, dto.NextTaskId);
+            _allBoards.Add(dto.Id, board);
+            // Y - advance the counter so new boards created after load get IDs that don't collide with loaded ones
+            if (dto.Id >= _nextBoardId)
+                _nextBoardId = dto.Id + 1;
+        }
+
+        // Y - called by GradingService.LoadData to restore board-member links for all members including the owner
+        public void LoadMember(int boardId, string email)
+        {
+            Board board = GetBoardById(boardId);
+            board.AddMember(email);
+            _userFacade.GetUser(email).AddBoard(board);
+        }
+
+        // Y - called by GradingService.LoadData to set stored column limits after the board is in memory
+        public void LoadColumnLimit(int boardId, int ordinal, int limit)
+        {
+            Board board = GetBoardById(boardId);
+            board.LimitColumn(ordinal, limit);
+        }
+
+        // Y - called by GradingService.LoadData to place a task into the correct column, restoring original creation time
+        public void LoadTask(TaskDTO dto)
+        {
+            Board board = GetBoardById(dto.BoardId);
+            DateTime dueDate = DateTime.Parse(dto.DueDate, null, System.Globalization.DateTimeStyles.RoundtripKind);
+            DateTime creationTime = DateTime.Parse(dto.CreationTime, null, System.Globalization.DateTimeStyles.RoundtripKind);
+            Task task = new Task(dto.Id, dto.Title, dto.Description ?? string.Empty, dueDate, creationTime, dto.AssigneeEmail);
+            board.GetColumn(dto.ColumnOrdinal).AddTask(task);
+        }
+
         /// <summary>
         /// A - Helper method to fetch a board system-wide by its ID.
         /// </summary>
@@ -187,7 +262,9 @@ namespace Backend.Facades
             // A - The Facade does the orchestration: first add member to the board, then link the board to the user.
             board.AddMember(email);
             user.AddBoard(board);
-            
+
+            _membersCtrl?.Insert(new UserBoardsDTO(boardID, email.Trim().ToLower()));
+
             log.Info($"User '{email}' successfully joined board ID {boardID}.");
         }
 
@@ -201,11 +278,34 @@ namespace Backend.Facades
             User user = _userFacade.GetLoggedInUser(email);
             Board board = GetBoardById(boardID);
 
+            // Y - capture which tasks will be unassigned by RemoveMember before it clears them in memory
+            List<int> toUnassign = new List<int>();
+            if (_taskCtrl != null)
+            {
+                string cleanEmail = email.Trim().ToLower();
+                for (int ordinal = 0; ordinal <= 1; ordinal++)
+                {
+                    foreach (Task t in board.GetColumn(ordinal).Tasks)
+                    {
+                        if (t.Assignee != null && t.Assignee.Equals(cleanEmail, StringComparison.OrdinalIgnoreCase))
+                            toUnassign.Add(t.Id);
+                    }
+                }
+            }
+
             // A - The BL logic in RemoveMember will throw an exception if the user is the owner.
             board.RemoveMember(email);
-            
+
             // A - Unlink from the user's collection.
             user.RemoveBoard(board.Name);
+
+            if (_membersCtrl != null)
+            {
+                _membersCtrl.Delete(boardID, email.Trim().ToLower());
+                // Y - persist the unassignments that RemoveMember just made in memory (Requirement 15)
+                foreach (int taskId in toUnassign)
+                    _taskCtrl.UpdateAssignee(boardID, taskId, null);
+            }
 
             log.Info($"User '{email}' left board ID {boardID}.");
         }
@@ -229,6 +329,7 @@ namespace Backend.Facades
             }
 
             board.TransferOwnership(newOwnerEmail);
+            _boardCtrl?.UpdateOwner(board.Id, newOwnerEmail);
             log.Info($"Ownership of board '{boardName}' transferred from '{currentOwnerEmail}' to '{newOwnerEmail}'.");
         }
 
@@ -264,6 +365,7 @@ namespace Backend.Facades
             User user = _userFacade.GetLoggedInUser(email);
             Board board = user.GetBoard(boardName);
             board.LimitColumn(columnOrdinal, limit);
+            _columnCtrl?.UpdateLimit(board.Id, columnOrdinal, limit);
         }
 
         /// <summary>

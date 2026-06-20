@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using Backend.BusinessLayer;
+using IntroSE.Kanban.Backend.DataAccessLayer;
+using IntroSE.Kanban.Backend.DataAccessLayer.DTOs;
 using log4net;
 using System.Text.RegularExpressions;
 
@@ -16,12 +18,21 @@ namespace Backend.Facades
         // The only static field allowed in the project, used strictly for logging purposes.
         private static readonly ILog log = LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
+        // Y - null when created without persistence (tests); non-null in production (GradingService injects it)
+        private UserController _userCtrl;
 
         /// <summary>
         /// Initializes a new instance of the UserFacade class.
         /// </summary>
         public UserFacade()
         {
+            _userCtrl = null;
+        }
+
+        // Y - injection constructor used by GradingService so every Register call is also persisted to DB
+        public UserFacade(UserController userCtrl)
+        {
+            _userCtrl = userCtrl;
         }
         
 
@@ -79,6 +90,9 @@ namespace Backend.Facades
 
             // Y - Requirement 6: user is automatically logged in right after registering, so they don't need to call Login again
             newUser.Login(password);
+
+            // Y - persist to DB if a controller was injected; null-conditional skips this in test mode
+            _userCtrl?.Insert(new UserDTO(cleanedEmail, password));
 
             log.Info($"User successfully registered with email: {cleanedEmail}");
         }
@@ -252,6 +266,14 @@ namespace Backend.Facades
             //start with one char or more, @, more chars, dot and more chars - by regex
             var regex = new Regex(@"^[^@\s]+@[^@\s]+\.[^@\s]+$"); 
             return regex.IsMatch(email);
+        }
+
+        // Y - called during LoadData to restore a user from a DB row; bypasses validation since DB data is already trusted
+        public void LoadUser(string email, string password)
+        {
+            string cleanedEmail = email.Trim().ToLower();
+            if (!_users.ContainsKey(cleanedEmail))
+                _users.Add(cleanedEmail, new User(cleanedEmail, password));
         }
 
         public bool isLoggedIn(string email)

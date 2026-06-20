@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using Backend.BusinessLayer;
+using IntroSE.Kanban.Backend.DataAccessLayer;
+using IntroSE.Kanban.Backend.DataAccessLayer.DTOs;
 using log4net;
 
 namespace Backend.Facades
@@ -13,6 +15,10 @@ namespace Backend.Facades
     {
         // Y - same shared-state pattern as BoardFacade: holds a reference to UserFacade for user lookups
         private UserFacade _userFacade;
+
+        // Y - null when created without persistence (tests); injected by GradingService for production use
+        private TaskController _taskCtrl;
+        private BoardController _boardCtrl;
 
         private static readonly ILog log = LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
@@ -29,22 +35,32 @@ namespace Backend.Facades
             _userFacade = userFacade;
         }
 
+        // Y - full injection constructor used by GradingService to wire in DAL controllers
+        public TaskFacade(UserFacade userFacade, TaskController taskCtrl, BoardController boardCtrl)
+        {
+            _userFacade = userFacade;
+            _taskCtrl = taskCtrl;
+            _boardCtrl = boardCtrl;
+        }
+
         /// <summary>
         /// Adds a new task to the backlog of a board.
         /// </summary>
-        /// <param name="email">User email, must be logged in.</param>
-        /// <param name="boardName">Name of the board.</param>
-        /// <param name="title">Task title, max 50 chars, not empty.</param>
-        /// <param name="description">Optional description, max 300 chars.</param>
-        /// <param name="dueDate">Task due date.</param>
-        /// <returns>The created Task object.</returns>
-        /// <exception cref="ArgumentException">Thrown if title/description violate constraints.</exception>
-        /// <exception cref="InvalidOperationException">Thrown if backlog is full or user not logged in.</exception>
         public Task AddTask(string email, string boardName, string title, string description, DateTime dueDate)
         {
             User user = _userFacade.GetLoggedInUser(email);
             Board board = user.GetBoard(boardName);
             Task task = board.AddTask(title, description, dueDate);
+
+            if (_taskCtrl != null)
+            {
+                // Y - persist the new task row; AddTask always places tasks in column 0 (Backlog)
+                _taskCtrl.Insert(new TaskDTO(task.Id, board.Id, 0, task.Title, task.Description,
+                    task.DueDate.ToString("o"), task.CreationTime.ToString("o"), task.Assignee));
+                // Y - persist the incremented NextTaskId so it survives a restart
+                _boardCtrl?.UpdateNextTaskId(board.Id, board.NextTaskId);
+            }
+
             log.Info($"Task '{title}' added to board '{boardName}' for user '{email}'.");
             return task;
         }
@@ -52,12 +68,6 @@ namespace Backend.Facades
         /// <summary>
         /// Advances a task to the next column.
         /// </summary>
-        /// <param name="email">User email, must be logged in.</param>
-        /// <param name="boardName">Name of the board.</param>
-        /// <param name="columnOrdinal">Current column index (0 or 1).</param>
-        /// <param name="taskId">ID of the task to advance.</param>
-        /// <exception cref="ArgumentException">Thrown if column or task not found.</exception>
-        /// <exception cref="InvalidOperationException">Thrown if task is already done, destination is full, or user is not the assignee.</exception>
         public void AdvanceTask(string email, string boardName, int columnOrdinal, int taskId)
         {
             User user = _userFacade.GetLoggedInUser(email);
@@ -81,68 +91,45 @@ namespace Backend.Facades
             }
 
             board.MoveTask(columnOrdinal, taskId);
+            _taskCtrl?.UpdateColumnOrdinal(board.Id, taskId, columnOrdinal + 1);
             log.Info($"Task {taskId} advanced from column {columnOrdinal} in board '{boardName}'.");
         }
 
         /// <summary>
         /// Updates the title of a task. Task must not be in the Done column.
         /// </summary>
-        /// <param name="email">User email, must be logged in.</param>
-        /// <param name="boardName">Name of the board.</param>
-        /// <param name="columnOrdinal">Current column index.</param>
-        /// <param name="taskId">ID of the task.</param>
-        /// <param name="title">New title, max 50 chars, not empty.</param>
-        /// <exception cref="ArgumentException">Thrown if task is done or title is invalid.</exception>
         public void UpdateTaskTitle(string email, string boardName, int columnOrdinal, int taskId, string title)
         {
-            // Y - GetEditableTask is a private helper that checks login, finds the task, and blocks edits to done tasks
-            Task task = GetEditableTask(email, boardName, columnOrdinal, taskId);
+            // Y - GetEditableTask returns the task and its board so we have the board ID for DB persistence
+            var (task, board) = GetEditableTask(email, boardName, columnOrdinal, taskId);
             task.UpdateTitle(title);
+            _taskCtrl?.UpdateTitle(board.Id, taskId, title);
         }
 
         /// <summary>
         /// Updates the description of a task. Task must not be in the Done column.
         /// </summary>
-        /// <param name="email">User email, must be logged in.</param>
-        /// <param name="boardName">Name of the board.</param>
-        /// <param name="columnOrdinal">Current column index.</param>
-        /// <param name="taskId">ID of the task.</param>
-        /// <param name="description">New description, max 300 chars.</param>
-        /// <exception cref="ArgumentException">Thrown if task is done or description is too long.</exception>
         public void UpdateTaskDescription(string email, string boardName, int columnOrdinal, int taskId, string description)
         {
-            Task task = GetEditableTask(email, boardName, columnOrdinal, taskId);
+            var (task, board) = GetEditableTask(email, boardName, columnOrdinal, taskId);
             task.UpdateDescription(description);
+            _taskCtrl?.UpdateDescription(board.Id, taskId, description);
         }
 
         /// <summary>
         /// Updates the due date of a task. Task must not be in the Done column.
         /// </summary>
-        /// <param name="email">User email, must be logged in.</param>
-        /// <param name="boardName">Name of the board.</param>
-        /// <param name="columnOrdinal">Current column index.</param>
-        /// <param name="taskId">ID of the task.</param>
-        /// <param name="dueDate">New due date.</param>
-        /// <exception cref="ArgumentException">Thrown if task is done.</exception>
         public void UpdateTaskDueDate(string email, string boardName, int columnOrdinal, int taskId, DateTime dueDate)
         {
-            Task task = GetEditableTask(email, boardName, columnOrdinal, taskId);
+            var (task, board) = GetEditableTask(email, boardName, columnOrdinal, taskId);
             task.UpdateDueDate(dueDate);
+            _taskCtrl?.UpdateDueDate(board.Id, taskId, dueDate.ToString("o"));
         }
 
-        /// <summary>
-        /// Returns all in-progress tasks across all of the user's boards.
-        /// </summary>
-        /// <param name="email">User email, must be logged in.</param>
-        /// <returns>A flat list of all in-progress tasks.</returns>
-        /// <exception cref="InvalidOperationException">Thrown if user is not logged in.</exception>
         /// <summary>
         /// Returns all in-progress tasks assigned to the user, across all boards they are a member of.
         /// Satisfies Requirement 22: list 'in progress' tasks that the user is assigned to.
         /// </summary>
-        /// <param name="email">User email, must be logged in.</param>
-        /// <returns>A flat list of in-progress tasks assigned to this user.</returns>
-        /// <exception cref="InvalidOperationException">Thrown if user is not logged in.</exception>
         public List<Task> InProgressTasks(string email)
         {
             User user = _userFacade.GetLoggedInUser(email);
@@ -154,14 +141,11 @@ namespace Backend.Facades
         }
 
         /// <summary>
-        /// Private helper: finds a task and ensures it is not in the Done column (editable).
-        /// A - Updated to also check if the user is the assignee (Requirement for Milestone 2).
-        /// </summary>
-        /// <summary>
         /// Private helper: finds a task, validates it is not Done, and enforces edit permissions.
+        /// Returns the task AND its board so callers can use the board ID for DB persistence.
         /// Satisfies Requirement 20: a non-done task can be changed only by its assignee or the board owner.
         /// </summary>
-        private Task GetEditableTask(string email, string boardName, int columnOrdinal, int taskId)
+        private (Task task, Board board) GetEditableTask(string email, string boardName, int columnOrdinal, int taskId)
         {
             User user = _userFacade.GetLoggedInUser(email);
             Board board = user.GetBoard(boardName);
@@ -186,31 +170,13 @@ namespace Backend.Facades
                 throw new InvalidOperationException("Only the task assignee or board owner may modify this task.");
             }
 
-            return task;
+            return (task, board);
         }
 
-
-        /// <summary>
-        /// A - Assigns a task to a specific user on the board.
-        /// </summary>
-        /// <param name="email">Email of the user making the request. Must be logged in.</param>
-        /// <param name="boardName">The name of the board.</param>
-        /// <param name="columnOrdinal">The column ID (0 = Backlog, 1 = InProgress, 2 = Done).</param>
-        /// <param name="taskID">The task ID to assign.</param>
-        /// <param name="emailAssignee">Email of the user to assign the task to. Can be null/empty to unassign.</param>
         /// <summary>
         /// A - Assigns a task to a specific board member, or unassigns it.
-        /// Satisfies Requirement 23:
-        ///   - Unassigned task: any board member may assign it to any board member.
-        ///   - Already-assigned task: only the current assignee or board owner may change the assignment.
+        /// Satisfies Requirement 23.
         /// </summary>
-        /// <param name="email">Email of the user making the request. Must be logged in and be a board member.</param>
-        /// <param name="boardName">The name of the board.</param>
-        /// <param name="columnOrdinal">Column index (0=backlog, 1=in progress, 2=done).</param>
-        /// <param name="taskID">The task ID to assign.</param>
-        /// <param name="emailAssignee">Email of the new assignee (must be a board member), or null/empty to unassign.</param>
-        /// <exception cref="ArgumentException">Thrown if assignee is not a board member or task not found.</exception>
-        /// <exception cref="InvalidOperationException">Thrown if task is done or caller lacks permission to reassign.</exception>
         public void AssignTask(string email, string boardName, int columnOrdinal, int taskID, string emailAssignee)
         {
             User user = _userFacade.GetLoggedInUser(email);
@@ -235,14 +201,16 @@ namespace Backend.Facades
                 }
             }
 
-            // A - validate the new assignee is a board member 
+            // A - validate the new assignee is a board member
             if (!string.IsNullOrEmpty(emailAssignee) && !board.Members.Contains(emailAssignee.Trim().ToLower()))
             {
                 log.Warn($"Failed to assign task: User '{emailAssignee}' is not a member of board '{boardName}'.");
                 throw new ArgumentException($"User '{emailAssignee}' is not a member of the board.");
             }
 
-            task.AssignTask(string.IsNullOrEmpty(emailAssignee) ? null : emailAssignee);
+            string newAssignee = string.IsNullOrEmpty(emailAssignee) ? null : emailAssignee;
+            task.AssignTask(newAssignee);
+            _taskCtrl?.UpdateAssignee(board.Id, taskID, newAssignee);
             log.Info($"Task {taskID} on board '{boardName}' assigned to '{emailAssignee ?? "nobody"}' by '{email}'.");
         }
     }
