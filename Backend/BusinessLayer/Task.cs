@@ -50,6 +50,17 @@ namespace Backend.BusinessLayer
             _assignee = null;
         }
 
+        // Y - load constructor: restores a task from DB without re-running validation or setting DateTime.Now
+        public Task(int id, string title, string description, DateTime dueDate, DateTime creationTime, string assignee)
+        {
+            _id = id;
+            _creationTime = creationTime;
+            _title = title;
+            _description = description ?? string.Empty;
+            _dueDate = dueDate;
+            _assignee = assignee;
+        }
+
         // Y - read-only properties: outside code can read these values but cannot set them directly
         // The "=>" arrow syntax is shorthand for { get { return _id; } }
         public int Id => _id;

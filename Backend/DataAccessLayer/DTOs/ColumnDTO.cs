@@ -1,12 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace IntroSE.Kanban.Backend.DataAccessLayer.DTOs
 {
-    internal class ColumnDTO
+    /// <summary>Represents one row in the Column table (stores per-column task limits).</summary>
+    public class ColumnDTO
     {
+        public int BoardId { get; }
+        public int Ordinal { get; }
+        public int Limit { get; }
+
+        public ColumnDTO(int boardId, int ordinal, int limit)
+        {
+            BoardId = boardId;
+            Ordinal = ordinal;
+            Limit = limit;
+        }
     }
 }

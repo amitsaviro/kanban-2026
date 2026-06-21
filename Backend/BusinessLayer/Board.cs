@@ -48,12 +48,30 @@ namespace Backend.BusinessLayer
             };
         }
 
+        // Y - called by GradingService.LoadData to restore a board from a DB row (no auto-member, preserves stored nextTaskId)
+        public Board(int id, string name, string ownerEmail, int nextTaskId)
+        {
+            _id = id;
+            _name = name;
+            _ownerEmail = ownerEmail;
+            _nextTaskId = nextTaskId;
+            _members = new List<string>();
+            _columns = new List<Column>
+            {
+                new Column("backlog", ColumnType.Backlog),
+                new Column("in progress", ColumnType.InProgress),
+                new Column("done", ColumnType.Done)
+            };
+        }
+
         // Y - read-only property for the board name
         public string Name => _name;
 
         // A - Expose ID, Owner, and Members as read-only properties.
         public int Id => _id;
         public string OwnerEmail => _ownerEmail;
+        // Y - exposed so TaskFacade can persist the updated value to DB after each AddTask call
+        public int NextTaskId => _nextTaskId;
         // Y - returns a copy so callers cannot bypass AddMember/RemoveMember by mutating the list directly
         public List<string> Members => new List<string>(_members);
 

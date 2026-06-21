@@ -1,17 +1,19 @@
-﻿using Backend.BusinessLayer;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace IntroSE.Kanban.Backend.DataAccessLayer.DTOs
 {
-    internal class UserDTO
+    /// <summary>
+    /// Represents one row in the Users table.
+    /// A DTO (Data Transfer Object) is a plain data holder with no logic —
+    /// it just carries information between the DB and the BL.
+    /// </summary>
+    public class UserDTO
     {
-        public const string Email = "email";
-        public const string Password = "password";
-        public const bool IsLoggedIn = false;
-        public Dictionary<string,Board> _boards;
+        public string Email { get; }
+        public string Password { get; }
+
+        public UserDTO(string email, string password)
+        {
+            Email = email;
+            Password = password;
+        }
     }
 }

@@ -1,13 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace IntroSE.Kanban.Backend.DataAccessLayer.DTOs
 {
-    internal class UserBoardsDTO
+    // Y - mirrors one row in BoardMembers (many-to-many between boards and users)
+    public class UserBoardsDTO
     {
+        public int BoardId { get; }
+        public string UserEmail { get; }
 
+        public UserBoardsDTO(int boardId, string userEmail)
+        {
+            BoardId = boardId;
+            UserEmail = userEmail;
+        }
     }
 }
