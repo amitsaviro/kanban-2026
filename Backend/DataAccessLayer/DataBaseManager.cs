@@ -1,5 +1,5 @@
 using System;
-using System.Data.SQLite;
+using Microsoft.Data.Sqlite;
 using System.IO;
 
 namespace IntroSE.Kanban.Backend.DataAccessLayer
@@ -16,13 +16,13 @@ namespace IntroSE.Kanban.Backend.DataAccessLayer
         {
             // Y - relative path so kanban.db is always next to the compiled dll (Requirement 5b.6)
             string path = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "kanban.db"));
-            _connectionString = $"Data Source={path};Version=3;";
+            _connectionString = $"Data Source={path}";
         }
 
         /// <summary>Returns an unopened SQLite connection. Callers must open and dispose it.</summary>
-        public SQLiteConnection GetConnection()
+        public SqliteConnection GetConnection()
         {
-            return new SQLiteConnection(_connectionString);
+            return new SqliteConnection(_connectionString);
         }
 
         /// <summary>
@@ -31,7 +31,7 @@ namespace IntroSE.Kanban.Backend.DataAccessLayer
         /// </summary>
         public void CreateSchema()
         {
-            using (SQLiteConnection con = GetConnection())
+            using (SqliteConnection con = GetConnection())
             {
                 con.Open();
                 // Y - one big CREATE TABLE IF NOT EXISTS block; runs as a single batch
@@ -68,7 +68,7 @@ namespace IntroSE.Kanban.Backend.DataAccessLayer
                         AssigneeEmail TEXT,
                         PRIMARY KEY (Id, BoardId)
                     );";
-                using (SQLiteCommand cmd = new SQLiteCommand(sql, con))
+                using (SqliteCommand cmd = new SqliteCommand(sql, con))
                     cmd.ExecuteNonQuery();
             }
         }
@@ -76,7 +76,7 @@ namespace IntroSE.Kanban.Backend.DataAccessLayer
         /// <summary>Deletes all rows from every table but keeps the schema intact.</summary>
         public void ClearDatabase()
         {
-            using (SQLiteConnection con = GetConnection())
+            using (SqliteConnection con = GetConnection())
             {
                 con.Open();
                 // Y - delete child tables before parent tables to respect foreign-key order
@@ -86,7 +86,7 @@ namespace IntroSE.Kanban.Backend.DataAccessLayer
                     DELETE FROM BoardMembers;
                     DELETE FROM Board;
                     DELETE FROM Users;";
-                using (SQLiteCommand cmd = new SQLiteCommand(sql, con))
+                using (SqliteCommand cmd = new SqliteCommand(sql, con))
                     cmd.ExecuteNonQuery();
             }
         }

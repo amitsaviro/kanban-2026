@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using System.Data.SQLite;
+using Microsoft.Data.Sqlite;
 using IntroSE.Kanban.Backend.DataAccessLayer.DTOs;
 
 namespace IntroSE.Kanban.Backend.DataAccessLayer
@@ -17,11 +17,11 @@ namespace IntroSE.Kanban.Backend.DataAccessLayer
         // Y - parameterized query prevents SQL injection; always use @Param syntax with SQLite
         public void Insert(UserDTO dto)
         {
-            using (SQLiteConnection con = _dbManager.GetConnection())
+            using (SqliteConnection con = _dbManager.GetConnection())
             {
                 con.Open();
                 string sql = "INSERT INTO Users (Email, Password) VALUES (@Email, @Password)";
-                using (SQLiteCommand cmd = new SQLiteCommand(sql, con))
+                using (SqliteCommand cmd = new SqliteCommand(sql, con))
                 {
                     cmd.Parameters.AddWithValue("@Email", dto.Email);
                     cmd.Parameters.AddWithValue("@Password", dto.Password);
@@ -34,12 +34,12 @@ namespace IntroSE.Kanban.Backend.DataAccessLayer
         public List<UserDTO> LoadAll()
         {
             List<UserDTO> result = new List<UserDTO>();
-            using (SQLiteConnection con = _dbManager.GetConnection())
+            using (SqliteConnection con = _dbManager.GetConnection())
             {
                 con.Open();
                 string sql = "SELECT Email, Password FROM Users";
-                using (SQLiteCommand cmd = new SQLiteCommand(sql, con))
-                using (SQLiteDataReader reader = cmd.ExecuteReader())
+                using (SqliteCommand cmd = new SqliteCommand(sql, con))
+                using (SqliteDataReader reader = cmd.ExecuteReader())
                 {
                     while (reader.Read())
                         result.Add(new UserDTO(reader.GetString(0), reader.GetString(1)));
