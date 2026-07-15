@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using System.Data.SQLite;
+using Microsoft.Data.Sqlite;
 using IntroSE.Kanban.Backend.DataAccessLayer.DTOs;
 
 namespace IntroSE.Kanban.Backend.DataAccessLayer
@@ -16,11 +16,11 @@ namespace IntroSE.Kanban.Backend.DataAccessLayer
 
         public void Insert(ColumnDTO dto)
         {
-            using (SQLiteConnection con = _dbManager.GetConnection())
+            using (SqliteConnection con = _dbManager.GetConnection())
             {
                 con.Open();
                 string sql = "INSERT INTO Column (BoardId, Ordinal, Lim) VALUES (@BoardId, @Ordinal, @Lim)";
-                using (SQLiteCommand cmd = new SQLiteCommand(sql, con))
+                using (SqliteCommand cmd = new SqliteCommand(sql, con))
                 {
                     cmd.Parameters.AddWithValue("@BoardId", dto.BoardId);
                     cmd.Parameters.AddWithValue("@Ordinal", dto.Ordinal);
@@ -32,11 +32,11 @@ namespace IntroSE.Kanban.Backend.DataAccessLayer
 
         public void UpdateLimit(int boardId, int ordinal, int limit)
         {
-            using (SQLiteConnection con = _dbManager.GetConnection())
+            using (SqliteConnection con = _dbManager.GetConnection())
             {
                 con.Open();
                 string sql = "UPDATE Column SET Lim = @Lim WHERE BoardId = @BoardId AND Ordinal = @Ordinal";
-                using (SQLiteCommand cmd = new SQLiteCommand(sql, con))
+                using (SqliteCommand cmd = new SqliteCommand(sql, con))
                 {
                     cmd.Parameters.AddWithValue("@Lim", limit);
                     cmd.Parameters.AddWithValue("@BoardId", boardId);
@@ -48,11 +48,11 @@ namespace IntroSE.Kanban.Backend.DataAccessLayer
 
         public void DeleteByBoard(int boardId)
         {
-            using (SQLiteConnection con = _dbManager.GetConnection())
+            using (SqliteConnection con = _dbManager.GetConnection())
             {
                 con.Open();
                 string sql = "DELETE FROM Column WHERE BoardId = @BoardId";
-                using (SQLiteCommand cmd = new SQLiteCommand(sql, con))
+                using (SqliteCommand cmd = new SqliteCommand(sql, con))
                 {
                     cmd.Parameters.AddWithValue("@BoardId", boardId);
                     cmd.ExecuteNonQuery();
@@ -63,12 +63,12 @@ namespace IntroSE.Kanban.Backend.DataAccessLayer
         public List<ColumnDTO> LoadAll()
         {
             List<ColumnDTO> result = new List<ColumnDTO>();
-            using (SQLiteConnection con = _dbManager.GetConnection())
+            using (SqliteConnection con = _dbManager.GetConnection())
             {
                 con.Open();
                 string sql = "SELECT BoardId, Ordinal, Lim FROM Column";
-                using (SQLiteCommand cmd = new SQLiteCommand(sql, con))
-                using (SQLiteDataReader reader = cmd.ExecuteReader())
+                using (SqliteCommand cmd = new SqliteCommand(sql, con))
+                using (SqliteDataReader reader = cmd.ExecuteReader())
                 {
                     while (reader.Read())
                         result.Add(new ColumnDTO(reader.GetInt32(0), reader.GetInt32(1), reader.GetInt32(2)));

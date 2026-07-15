@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using System.Data.SQLite;
+using Microsoft.Data.Sqlite;
 using IntroSE.Kanban.Backend.DataAccessLayer.DTOs;
 
 namespace IntroSE.Kanban.Backend.DataAccessLayer
@@ -16,11 +16,11 @@ namespace IntroSE.Kanban.Backend.DataAccessLayer
 
         public void Insert(UserBoardsDTO dto)
         {
-            using (SQLiteConnection con = _dbManager.GetConnection())
+            using (SqliteConnection con = _dbManager.GetConnection())
             {
                 con.Open();
                 string sql = "INSERT INTO BoardMembers (BoardId, UserEmail) VALUES (@BoardId, @UserEmail)";
-                using (SQLiteCommand cmd = new SQLiteCommand(sql, con))
+                using (SqliteCommand cmd = new SqliteCommand(sql, con))
                 {
                     cmd.Parameters.AddWithValue("@BoardId", dto.BoardId);
                     cmd.Parameters.AddWithValue("@UserEmail", dto.UserEmail);
@@ -31,11 +31,11 @@ namespace IntroSE.Kanban.Backend.DataAccessLayer
 
         public void Delete(int boardId, string userEmail)
         {
-            using (SQLiteConnection con = _dbManager.GetConnection())
+            using (SqliteConnection con = _dbManager.GetConnection())
             {
                 con.Open();
                 string sql = "DELETE FROM BoardMembers WHERE BoardId = @BoardId AND UserEmail = @UserEmail";
-                using (SQLiteCommand cmd = new SQLiteCommand(sql, con))
+                using (SqliteCommand cmd = new SqliteCommand(sql, con))
                 {
                     cmd.Parameters.AddWithValue("@BoardId", boardId);
                     cmd.Parameters.AddWithValue("@UserEmail", userEmail);
@@ -46,11 +46,11 @@ namespace IntroSE.Kanban.Backend.DataAccessLayer
 
         public void DeleteByBoard(int boardId)
         {
-            using (SQLiteConnection con = _dbManager.GetConnection())
+            using (SqliteConnection con = _dbManager.GetConnection())
             {
                 con.Open();
                 string sql = "DELETE FROM BoardMembers WHERE BoardId = @BoardId";
-                using (SQLiteCommand cmd = new SQLiteCommand(sql, con))
+                using (SqliteCommand cmd = new SqliteCommand(sql, con))
                 {
                     cmd.Parameters.AddWithValue("@BoardId", boardId);
                     cmd.ExecuteNonQuery();
@@ -61,12 +61,12 @@ namespace IntroSE.Kanban.Backend.DataAccessLayer
         public List<UserBoardsDTO> LoadAll()
         {
             List<UserBoardsDTO> result = new List<UserBoardsDTO>();
-            using (SQLiteConnection con = _dbManager.GetConnection())
+            using (SqliteConnection con = _dbManager.GetConnection())
             {
                 con.Open();
                 string sql = "SELECT BoardId, UserEmail FROM BoardMembers";
-                using (SQLiteCommand cmd = new SQLiteCommand(sql, con))
-                using (SQLiteDataReader reader = cmd.ExecuteReader())
+                using (SqliteCommand cmd = new SqliteCommand(sql, con))
+                using (SqliteDataReader reader = cmd.ExecuteReader())
                 {
                     while (reader.Read())
                         result.Add(new UserBoardsDTO(reader.GetInt32(0), reader.GetString(1)));

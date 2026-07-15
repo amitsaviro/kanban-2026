@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Data.SQLite;
+using Microsoft.Data.Sqlite;
 using IntroSE.Kanban.Backend.DataAccessLayer.DTOs;
 
 namespace IntroSE.Kanban.Backend.DataAccessLayer
@@ -17,12 +17,12 @@ namespace IntroSE.Kanban.Backend.DataAccessLayer
 
         public void Insert(TaskDTO dto)
         {
-            using (SQLiteConnection con = _dbManager.GetConnection())
+            using (SqliteConnection con = _dbManager.GetConnection())
             {
                 con.Open();
                 string sql = @"INSERT INTO Task (Id, BoardId, ColumnOrdinal, Title, Description, DueDate, CreationTime, AssigneeEmail)
                                VALUES (@Id, @BoardId, @ColumnOrdinal, @Title, @Description, @DueDate, @CreationTime, @AssigneeEmail)";
-                using (SQLiteCommand cmd = new SQLiteCommand(sql, con))
+                using (SqliteCommand cmd = new SqliteCommand(sql, con))
                 {
                     cmd.Parameters.AddWithValue("@Id", dto.Id);
                     cmd.Parameters.AddWithValue("@BoardId", dto.BoardId);
@@ -64,11 +64,11 @@ namespace IntroSE.Kanban.Backend.DataAccessLayer
 
         public void DeleteByBoard(int boardId)
         {
-            using (SQLiteConnection con = _dbManager.GetConnection())
+            using (SqliteConnection con = _dbManager.GetConnection())
             {
                 con.Open();
                 string sql = "DELETE FROM Task WHERE BoardId = @BoardId";
-                using (SQLiteCommand cmd = new SQLiteCommand(sql, con))
+                using (SqliteCommand cmd = new SqliteCommand(sql, con))
                 {
                     cmd.Parameters.AddWithValue("@BoardId", boardId);
                     cmd.ExecuteNonQuery();
@@ -79,12 +79,12 @@ namespace IntroSE.Kanban.Backend.DataAccessLayer
         public List<TaskDTO> LoadAll()
         {
             List<TaskDTO> result = new List<TaskDTO>();
-            using (SQLiteConnection con = _dbManager.GetConnection())
+            using (SqliteConnection con = _dbManager.GetConnection())
             {
                 con.Open();
                 string sql = "SELECT Id, BoardId, ColumnOrdinal, Title, Description, DueDate, CreationTime, AssigneeEmail FROM Task";
-                using (SQLiteCommand cmd = new SQLiteCommand(sql, con))
-                using (SQLiteDataReader reader = cmd.ExecuteReader())
+                using (SqliteCommand cmd = new SqliteCommand(sql, con))
+                using (SqliteDataReader reader = cmd.ExecuteReader())
                 {
                     while (reader.Read())
                     {
@@ -106,11 +106,11 @@ namespace IntroSE.Kanban.Backend.DataAccessLayer
         // Y - column name comes from our own code (not user input) so string interpolation is safe here
         private void Update(int boardId, int taskId, string column, object value)
         {
-            using (SQLiteConnection con = _dbManager.GetConnection())
+            using (SqliteConnection con = _dbManager.GetConnection())
             {
                 con.Open();
                 string sql = $"UPDATE Task SET {column} = @Value WHERE Id = @TaskId AND BoardId = @BoardId";
-                using (SQLiteCommand cmd = new SQLiteCommand(sql, con))
+                using (SqliteCommand cmd = new SqliteCommand(sql, con))
                 {
                     cmd.Parameters.AddWithValue("@Value", value);
                     cmd.Parameters.AddWithValue("@TaskId", taskId);
