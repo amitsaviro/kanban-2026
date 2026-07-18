@@ -248,6 +248,29 @@ namespace Backend.ServiceLayer
         }
 
         /// <summary>
+        /// Returns the owner's email of a board given its global unique ID.
+        /// </summary>
+        /// <param name="boardId">The unique integer ID of the board.</param>
+        /// <returns>A JSON string with the owner's email on success, or an error message.</returns>
+        // A- new method, added for Milestone 3 so the Frontend's boards-list screen can satisfy
+        // A- Requirement 29.b ("show the board name and the board owner") through the service layer,
+        // A- instead of reading BoardFacade/DataAccessLayer directly from the GUI.
+        public string GetBoardOwner(int boardId)
+        {
+            try
+            {
+                string owner = _boardFacade.GetBoardOwner(boardId);
+                var response = new { ErrorMessage = (string)null, ReturnValue = owner };
+                return JsonSerializer.Serialize(response);
+            }
+            catch (Exception ex)
+            {
+                var response = new { ErrorMessage = ex.Message, ReturnValue = (object)null };
+                return JsonSerializer.Serialize(response);
+            }
+        }
+
+        /// <summary>
         /// Transfers board ownership from the current owner to another board member.
         /// </summary>
         /// <param name="ownerEmail">The email of the current owner.</param>
