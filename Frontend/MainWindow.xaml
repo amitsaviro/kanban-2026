@@ -1,0 +1,30 @@
+<Window x:Class="Frontend.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:Frontend.ViewModels"
+        xmlns:views="clr-namespace:Frontend.Views"
+        Title="Kanban" Height="650" Width="1000">
+
+    <!-- A- ViewModel-first navigation: each ViewModel type maps to exactly one View via a
+         DataTemplate. MainWindowViewModel only ever swaps CurrentViewModel; WPF's binding
+         engine picks the matching DataTemplate and swaps the visible screen automatically -
+         no View or code-behind decides what to show next. -->
+    <Window.Resources>
+        <DataTemplate DataType="{x:Type vm:AuthViewModel}">
+            <views:AuthView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:BoardsListViewModel}">
+            <views:BoardsListView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:BoardViewModel}">
+            <views:BoardView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:InProgressTasksViewModel}">
+            <views:InProgressTasksView />
+        </DataTemplate>
+    </Window.Resources>
+
+    <Grid>
+        <ContentControl Content="{Binding CurrentViewModel}" />
+    </Grid>
+</Window>

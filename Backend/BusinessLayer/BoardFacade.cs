@@ -250,6 +250,19 @@ namespace Backend.Facades
         }
 
         /// <summary>
+        /// A - Gets the email of a board's owner by its ID.
+        /// </summary>
+        /// <param name="boardId">The system-wide unique ID of the board.</param>
+        /// <returns>The email of the board's owner.</returns>
+        // A- new method, added for Milestone 3: Requirement 29.b requires the boards list screen to show
+        // A- the board owner next to its name, but no existing method exposed Board.OwnerEmail outside this
+        // A- class. This only reads data that already exists on Board - no other method's behavior changes.
+        public string GetBoardOwner(int boardId)
+        {
+            return GetBoardById(boardId).OwnerEmail;
+        }
+
+        /// <summary>
         /// A - Allows a user to join an existing shared board.
         /// </summary>
         /// <param name="email">Email of the user joining the board. Must be logged in.</param>
